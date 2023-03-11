@@ -1,7 +1,5 @@
-[![MasterHead](https://thumbs2.imgbox.com/f9/6c/fWOQthm2_t.jpg)]
 <h1 align="center">Hi 👋, I'm Ashen Chathuranga</h1>
 <h3 align="center">A Python enthusiast from Sri Lanka, fueled by passion for programming.</h3>
-<img align="right" alt="Coding" width="400" src="https://thumbs2.imgbox.com/96/91/3eKKEK34_t.gif">
 
 <p align="left"> <img src="https://komarev.com/ghpvc/?username=ktauchathuranga&label=Profile%20views&color=0e75b6&style=flat" alt="ktauchathuranga" /> </p>
 
