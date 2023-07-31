@@ -24,4 +24,5 @@
 <h3 align="left">Support:</h3>
 <p><a href="https://www.buymeacoffee.com/ktauchathuranga"> <img align="left" src="https://cdn.buymeacoffee.com/buttons/v2/default-yellow.png" height="50" width="210" alt="ktauchathuranga" /></a></p><br><br>
 
-![snake gif](https://github.com/ktauchathuranga/ktauchathuranga/blob/output/github-contribution-grid-snake.gif)
+<!--END_SECTION:data-section-->
+![github contribution grid snake animation](https://raw.githubusercontent.com/ktauchathuranga/ktauchathuranga/output/github-contribution-grid-snake-dark.svg#gh-dark-mode-only)![github contribution grid snake animation](https://raw.githubusercontent.com/ktauchathuranga/ktauchathuranga/output/github-contribution-grid-snake.svg#gh-light-mode-only)
