@@ -1,6 +1,12 @@
 <h1 align="center">Hi 👋, I'm Ashen Chathuranga</h1>
 <h3 align="center">A Python enthusiast from Sri Lanka, fueled by passion for programming.</h3>
 
+<div align="center">
+  <img src="https://profile-counter.glitch.me/ktauchathuranga/count.svg?"  />
+</div>
+
+###
+
 <p align="left"> <img src="https://komarev.com/ghpvc/?username=ktauchathuranga&label=Profile%20views&color=0e75b6&style=flat" alt="ktauchathuranga" /> </p>
 
 - 🌱 I’m currently learning **C++**
