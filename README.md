@@ -1,6 +1,7 @@
 <h1 align="center">Hi, I'm Ashen Chathuranga</h1>
 <h3 align="center">A Python enthusiast from Sri Lanka, fueled by passion for programming.</h3>
 
+[![Typing SVG](https://readme-typing-svg.herokuapp.com?font=JetBrains+Mono&pause=1000&color=FFFFFF&center=true&vCenter=true&width=435&lines=hello...;it's+me+Ashen+Chathuranga;software+developer...;microcontroller+enthusiasts...;open-source+is+0x1F5A4)](https://git.io/typing-svg)
 
 <p align="left"> <img src="https://komarev.com/ghpvc/?username=ktauchathuranga&label=Profile%20views&color=0e75b6&style=flat" alt="ktauchathuranga" /> </p>
 
