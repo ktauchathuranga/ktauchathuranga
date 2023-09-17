@@ -6,7 +6,7 @@
 <a href="https://git.io/typing-svg"><img src="https://readme-typing-svg.herokuapp.com?font=JetBrains+Mono&size=25&pause=1000&color=FFFFFF&center=true&vCenter=true&width=435&lines=hello...;it's+me+Ashen+Chathuranga;software+developer...;microcontroller+enthusiast...;open-source+is+0x1F5A4" alt="Typing SVG" /></a>
 </p>
 
-<p align="left"> <img src="https://komarev.com/ghpvc/?username=ktauchathuranga&label=Profile%20views&color=0e75b6&style=flat" alt="ktauchathuranga" /> </p>
+<p align="left"> <img src="https://komarev.com/ghpvc/?username=ktauchathuranga&label=Profile%20views&color=lightgrey&style=flat" alt="ktauchathuranga" /> </p>
 
 - 🌱 I’m currently learning **C++**
 
@@ -16,18 +16,23 @@
 
 - ⚡ Fun fact **Python's syntax is designed to be very simple and readable, which makes it a great language for beginners to learn programming. In fact, it's often said that "Python is executable pseudocode."**
 
-<h3 align="left">Connect with me:</h3>
-<p align="left">
-<a href="https://dev.to/ktauchathuranga" target="blank"><img align="center" src="https://raw.githubusercontent.com/rahuldkjain/github-profile-readme-generator/master/src/images/icons/Social/devto.svg" alt="ktauchathuranga" height="30" width="40" /></a>
-<a href="https://linkedin.com/in/ktauchathuranga" target="blank"><img align="center" src="https://raw.githubusercontent.com/rahuldkjain/github-profile-readme-generator/master/src/images/icons/Social/linked-in-alt.svg" alt="ktauchathuranga" height="30" width="40" /></a>
-<a href="https://www.youtube.com/@ktauchathuranga" target="blank"><img align="center" src="https://raw.githubusercontent.com/rahuldkjain/github-profile-readme-generator/master/src/images/icons/Social/youtube.svg" alt="ktauchathuranga" height="30" width="40" /></a>
-</p>
 
-<h3 align="left">Languages and Tools:</h3>
-<p align="left"> <a href="https://www.arduino.cc/" target="_blank" rel="noreferrer"> <img src="https://cdn.worldvectorlogo.com/logos/arduino-1.svg" alt="arduino" width="40" height="40"/> </a> <a href="https://www.cprogramming.com/" target="_blank" rel="noreferrer"> <img src="https://raw.githubusercontent.com/devicons/devicon/master/icons/c/c-original.svg" alt="c" width="40" height="40"/> </a> <a href="https://opencv.org/" target="_blank" rel="noreferrer"> <img src="https://www.vectorlogo.zone/logos/opencv/opencv-icon.svg" alt="opencv" width="40" height="40"/> </a> <a href="https://www.python.org" target="_blank" rel="noreferrer"> <img src="https://raw.githubusercontent.com/devicons/devicon/master/icons/python/python-original.svg" alt="python" width="40" height="40"/> </a> <a href="https://pytorch.org/" target="_blank" rel="noreferrer"> <img src="https://www.vectorlogo.zone/logos/pytorch/pytorch-icon.svg" alt="pytorch" width="40" height="40"/> </a> <a href="https://www.qt.io/" target="_blank" rel="noreferrer"> <img src="https://upload.wikimedia.org/wikipedia/commons/0/0b/Qt_logo_2016.svg" alt="qt" width="40" height="40"/> </a> <a href="https://scikit-learn.org/" target="_blank" rel="noreferrer"> <img src="https://upload.wikimedia.org/wikipedia/commons/0/05/Scikit_learn_logo_small.svg" alt="scikit_learn" width="40" height="40"/> </a> </p>
+## Want to know more about me? 
+
+  <p>
+    <a href="https://linkedin.com/in/ktauchathuranga" target="_blank"><img src="https://img.shields.io/badge/-LinkedIn-222222?style=flat-square&logo=Linkedin&logoColor=white&link=https://linkedin.com/in/ktauchathuranga)](https://linkedin.com/in/ktauchathuranga"></a>
+  <a href="https://www.youtube.com/@ktauchathuranga" target="_blank"><img src="https://img.shields.io/badge/-YouTube-222222?style=flat-square&logo=YouTube&logoColor=white&link=https://www.youtube.com/@ktauchathuranga)](https://www.youtube.com/@ktauchathuranga"></a>
+    <a href="https://www.facebook.com/ktauchathuranga" target="_blank"><img src="https://img.shields.io/badge/Facebook-222222?&style=flat-square&logo=facebook&logoColor=white&link=https://www.facebook.com/ktauchathuranga)](https://www.facebook.com/ktauchathuranga"></a>
+  </p>
+
+## Skills <img src="https://media.giphy.com/media/QssGEmpkyEOhBCb7e1/giphy.gif" width="25px">
+![](https://img.shields.io/badge/Code-PHP-informational?style=flat&logo=php&logoColor=white&color=ffffff)
+![](https://img.shields.io/badge/Code-C/C%2B%2B-informational?style=flat&logo=c%2B%2B&logoColor=white&color=ffffff)
+![](https://img.shields.io/badge/Code-Python-informational?style=flat&logo=python&logoColor=white&color=ffffff)
+![](https://img.shields.io/badge/Database-SQLite-informational?style=flat&logo=sqlite&logoColor=white&color=ffffff)
 
 <h3 align="left">Support:</h3>
-<p><a href="https://www.buymeacoffee.com/ktauchathuranga"> <img align="left" src="https://cdn.buymeacoffee.com/buttons/v2/default-yellow.png" height="50" width="210" alt="ktauchathuranga" /></a></p><br><br>
+<p><a href="https://www.buymeacoffee.com/ktauchathuranga"> <img src="https://img.shields.io/badge/Buymeacoffee-222222?&style=flat-square&logo=buymeacoffee&logoColor=white&link=https://www.buymeacoffee.com/ktauchathuranga)](https://www.buymeacoffee.com/ktauchathuranga"></p><br><br>
 
 <!--END_SECTION:data-section-->
 ![github contribution grid snake animation](https://raw.githubusercontent.com/ktauchathuranga/ktauchathuranga/output/github-contribution-grid-snake-dark.svg#gh-dark-mode-only)![github contribution grid snake animation](https://raw.githubusercontent.com/ktauchathuranga/ktauchathuranga/output/github-contribution-grid-snake.svg#gh-light-mode-only)
