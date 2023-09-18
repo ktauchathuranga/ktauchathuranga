@@ -4,7 +4,9 @@
 
 <p align="center">
 <a href="https://git.io/typing-svg#gh-dark-mode-only"><img src="https://readme-typing-svg.herokuapp.com?font=JetBrains+Mono&size=25&pause=1000&color=FFFFFF&center=true&vCenter=true&width=435&lines=hello...;it's+me+Ashen+Chathuranga;software+developer...;microcontroller+enthusiast...;open-source+is+0x1F5A4" alt="Typing SVG" /></a>
+</p>
 
+<p align="center">
 <a href="https://git.io/typing-svg#gh-light-mode-only"><img src="https://readme-typing-svg.herokuapp.com?font=JetBrains+Mono&size=25&pause=1000&color=000000&center=true&vCenter=true&width=435&lines=hello...;it's+me+Ashen+Chathuranga;software+developer...;microcontroller+enthusiast...;open-source+is+0x1F5A4" alt="Typing SVG" /></a>
 </p>
 
