@@ -35,7 +35,7 @@
 ![](https://img.shields.io/badge/Code-Python-informational?style=flat&logo=python&logoColor=white&color=ffffff)
 ![](https://img.shields.io/badge/Database-SQLite-informational?style=flat&logo=sqlite&logoColor=white&color=ffffff)
 
-<h3 align="left">Support:</h3>
+## Support:
 <p><a href="https://www.buymeacoffee.com/ktauchathuranga"> <img src="https://img.shields.io/badge/Buymeacoffee-222222?&style=flat-square&logo=buymeacoffee&logoColor=white&link=https://www.buymeacoffee.com/ktauchathuranga)](https://www.buymeacoffee.com/ktauchathuranga"></p><br><br>
 
 <!--END_SECTION:data-section-->
