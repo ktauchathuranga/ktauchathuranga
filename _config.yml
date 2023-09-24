@@ -1,2 +1,2 @@
-markdown: kramdown
-auto_ids: false
+name: true
+title: false
