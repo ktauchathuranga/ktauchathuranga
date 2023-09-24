@@ -1,4 +1,4 @@
-<h1 id="greting" align="center">Hi, I'm Ashen Chathuranga</h1>
+<h1 align="center">Hi, I'm Ashen Chathuranga</h1>
 <h3 align="center">A Python enthusiast from Sri Lanka, fueled by a passion for programming.</h3>
 
 <p align="center">
