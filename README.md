@@ -13,8 +13,6 @@
 
 - 🌱 I’m currently learning **C++**
 
-- 💬 Ask me about **Python**
-
 - 📫 How to reach me **ktauchathuranga@gmail.com**
 
 - ⚡ Fun fact **Python's syntax is designed to be very simple and readable, which makes it a great language for beginners to learn programming. In fact, it's often said that "Python is executable pseudocode."**
