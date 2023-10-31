@@ -37,3 +37,5 @@
 
 <!--END_SECTION:data-section-->
 ![github contribution grid snake animation](https://raw.githubusercontent.com/ktauchathuranga/ktauchathuranga/output/github-contribution-grid-snake-dark.svg#gh-dark-mode-only)![github contribution grid snake animation](https://raw.githubusercontent.com/ktauchathuranga/ktauchathuranga/output/github-contribution-grid-snake.svg#gh-light-mode-only)
+
+[![An image of @ktauchathuranga's Holopin badges, which is a link to view their full Holopin profile](https://holopin.me/ktauchathuranga)](https://holopin.io/@ktauchathuranga)
