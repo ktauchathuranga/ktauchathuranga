@@ -45,10 +45,11 @@
 ![](https://github-readme-stats.vercel.app/api/top-langs/?username=ktauchathuranga&theme=dark&hide_border=true&include_all_commits=true&count_private=true&layout=compact) -->
 
 
-<a href="https://github.com/ktauchathuranga#gh-dark-mode-only">
-  <img src="https://github-readme-streak-stats.herokuapp.com/?user=ktauchathuranga&theme=dark&hide_border=true#gh-dark-mode-only" alt="My GitHub Stats" />
-</a>
-
-<a href="https://github.com/ktauchathuranga#gh-light-mode-only">
-  <img src="https://github-readme-streak-stats.herokuapp.com/?user=ktauchathuranga&theme=greywhite&hide_border=true#gh-light-mode-only" alt="My GitHub Stats" />
-</a>
+<div style="display: flex; justify-content: center; align-items: center; flex-direction: column;">
+    <a href="https://github.com/ktauchathuranga#gh-dark-mode-only">
+        <img src="https://github-readme-streak-stats.herokuapp.com/?user=ktauchathuranga&theme=dark&hide_border=true#gh-dark-mode-only" alt="My GitHub Stats" />
+    </a>
+    <a href="https://github.com/ktauchathuranga#gh-light-mode-only">
+        <img src="https://github-readme-streak-stats.herokuapp.com/?user=ktauchathuranga&theme=greywhite&hide_border=true#gh-light-mode-only" alt="My GitHub Stats" />
+    </a>
+</div>
