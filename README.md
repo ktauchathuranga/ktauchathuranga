@@ -11,7 +11,7 @@
 
 <p align="left"> <img src="https://komarev.com/ghpvc/?username=ktauchathuranga&label=Profile%20views&color=lightgrey&style=flat" alt="ktauchathuranga" /> </p>
 
-- 🌱 I’m currently learning **C++**
+- 🌱 I’m currently learning **"LIFE"**
 
 - 📫 How to reach me **ktauchathuranga@gmail.com**
 
