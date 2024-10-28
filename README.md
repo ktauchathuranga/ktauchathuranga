@@ -2,47 +2,58 @@
 <h3 align="center">A Python enthusiast from Sri Lanka, fueled by a passion for programming.</h3>
 
 <p align="center">
-<a href="https://git.io/typing-svg#gh-dark-mode-only"><img src="https://readme-typing-svg.herokuapp.com?font=JetBrains+Mono&size=25&pause=1000&color=FFFFFF&center=true&vCenter=true&width=435&lines=hello...;it's+me+Ashen+Chathuranga;software+developer...;microcontroller+enthusiast...;open-source+is+0x1F5A4" alt="Typing SVG" /></a>
-</p>
-
-<p align="center">
-<a href="https://git.io/typing-svg#gh-light-mode-only"><img src="https://readme-typing-svg.herokuapp.com?font=JetBrains+Mono&size=25&pause=1000&color=000000&center=true&vCenter=true&width=435&lines=hello...;it's+me+Ashen+Chathuranga;software+developer...;microcontroller+enthusiast...;open-source+is+0x1F5A4" alt="Typing SVG" /></a>
+  <a href="https://git.io/typing-svg#gh-dark-mode-only"><img src="https://readme-typing-svg.herokuapp.com?font=JetBrains+Mono&size=25&pause=1000&color=FFFFFF&center=true&vCenter=true&width=435&lines=hello...;it's+me+Ashen+Chathuranga;software+developer...;microcontroller+enthusiast...;open-source+is+0x1F5A4" alt="Typing SVG" /></a>
+  <a href="https://git.io/typing-svg#gh-light-mode-only"><img src="https://readme-typing-svg.herokuapp.com?font=JetBrains+Mono&size=25&pause=1000&color=000000&center=true&vCenter=true&width=435&lines=hello...;it's+me+Ashen+Chathuranga;software+developer...;microcontroller+enthusiast...;open-source+is+0x1F5A4" alt="Typing SVG" /></a>
 </p>
 
 <p align="left"> <img src="https://komarev.com/ghpvc/?username=ktauchathuranga&label=Profile%20views&color=lightgrey&style=flat" alt="ktauchathuranga" /> </p>
 
-- 🌱 I’m currently learning **C++**
+---
 
-- 📫 How to reach me **ktauchathuranga@gmail.com**
+### 🚀 What I Do
+- 🖥️ **Software Development**: Passionate about coding, mainly in Python and C++.
+- ⚙️ **Microcontroller Enthusiast**: Building embedded systems projects using Arduino and other microcontrollers.
+- 🔐 **Cryptography Explorer**: Intrigued by data encryption and old-school cryptography methods like one-time pads.
 
-- ⚡ Fun fact **Python's syntax is designed to be very simple and readable, which makes it a great language for beginners to learn programming. In fact, it's often said that "Python is executable pseudocode."**
+---
 
+### 🌱 Currently Learning
+- **"LIFE"** – Embracing lessons from both programming and life experiences every day.
 
-## Want to know more about me? 
+---
 
-  <p>
-    <a href="https://linkedin.com/in/ktauchathuranga" target="_blank"><img src="https://img.shields.io/badge/-LinkedIn-222222?style=flat-square&logo=Linkedin&logoColor=white&link=https://linkedin.com/in/ktauchathuranga)](https://linkedin.com/in/ktauchathuranga"></a>
-  <a href="https://www.youtube.com/@ktauchathuranga" target="_blank"><img src="https://img.shields.io/badge/-YouTube-222222?style=flat-square&logo=YouTube&logoColor=white&link=https://www.youtube.com/@ktauchathuranga)](https://www.youtube.com/@ktauchathuranga"></a>
-    <a href="https://www.facebook.com/ktauchathuranga" target="_blank"><img src="https://img.shields.io/badge/Facebook-222222?&style=flat-square&logo=facebook&logoColor=white&link=https://www.facebook.com/ktauchathuranga)](https://www.facebook.com/ktauchathuranga"></a>
-  </p>
+### 🔍 Fun Fact
+Python’s syntax is designed to be simple and readable, making it a great language for beginners. It’s often said that “Python is executable pseudocode.” Also, I love finding ways to hide messages using cryptography!
 
-## Skills <img src="https://media.giphy.com/media/QssGEmpkyEOhBCb7e1/giphy.gif" width="25px">
+---
+
+### 📬 Get in Touch
+- **Email**: [ktauchathuranga@gmail.com](mailto:ktauchathuranga@gmail.com)
+- **LinkedIn**: [ktauchathuranga](https://linkedin.com/in/ktauchathuranga)
+
+---
+
+## Want to know more about me?
+
+<p>
+  <a href="https://linkedin.com/in/ktauchathuranga" target="_blank"><img src="https://img.shields.io/badge/-LinkedIn-222222?style=flat-square&logo=Linkedin&logoColor=white"></a>
+  <a href="https://www.instagram.com/ktauchathuranga" target="_blank"><img src="https://img.shields.io/badge/-Instagram-222222?style=flat-square&logo=Instagram&logoColor=white"></a>
+  <a href="https://www.facebook.com/ktauchathuranga" target="_blank"><img src="https://img.shields.io/badge/Facebook-222222?&style=flat-square&logo=facebook&logoColor=white"></a>
+</p>
+
+---
+
+### 🛠️ Skills <img src="https://media.giphy.com/media/QssGEmpkyEOhBCb7e1/giphy.gif" width="25px">
 ![](https://img.shields.io/badge/Code-PHP-informational?style=flat&logo=php&logoColor=white&color=ffffff)
 ![](https://img.shields.io/badge/Code-C/C%2B%2B-informational?style=flat&logo=c%2B%2B&logoColor=white&color=ffffff)
 ![](https://img.shields.io/badge/Code-Python-informational?style=flat&logo=python&logoColor=white&color=ffffff)
 ![](https://img.shields.io/badge/Database-SQLite-informational?style=flat&logo=sqlite&logoColor=white&color=ffffff)
+![](https://img.shields.io/badge/Microcontrollers-Arduino-informational?style=flat&logo=arduino&logoColor=white&color=ffffff)
+![](https://img.shields.io/badge/Cryptography-Explorer-informational?style=flat&color=ffffff)
 
-## Support:
-<p><a href="https://www.buymeacoffee.com/ktauchathuranga"> <img src="https://img.shields.io/badge/Buymeacoffee-222222?&style=flat-square&logo=buymeacoffee&logoColor=white&link=https://www.buymeacoffee.com/ktauchathuranga)](https://www.buymeacoffee.com/ktauchathuranga"></p>
+---
 
-![github contribution grid snake animation](https://raw.githubusercontent.com/ktauchathuranga/ktauchathuranga/output/github-contribution-grid-snake-dark.svg#gh-dark-mode-only)![github contribution grid snake animation](https://raw.githubusercontent.com/ktauchathuranga/ktauchathuranga/output/github-contribution-grid-snake.svg#gh-light-mode-only)
-
-[![An image of @ktauchathuranga's Holopin badges, which is a link to view their full Holopin profile](https://holopin.me/ktauchathuranga)](https://holopin.io/@ktauchathuranga)
-
-## GitHub Stats:
-<!-- ![](https://github-readme-stats.vercel.app/api?username=ktauchathuranga&theme=dark&hide_border=true&include_all_commits=true&count_private=true)<br/>
-![](https://github-readme-streak-stats.herokuapp.com/?user=ktauchathuranga&theme=dark&hide_border=true#gh-dark-mode-only)<br/>
-![](https://github-readme-stats.vercel.app/api/top-langs/?username=ktauchathuranga&theme=dark&hide_border=true&include_all_commits=true&count_private=true&layout=compact) -->
+### 📊 GitHub Stats
 
 <div align="center">
   <a href="https://github.com/ktauchathuranga#gh-dark-mode-only">
@@ -53,4 +64,12 @@
   </a>
 </div>
 
+---
+
+### ☕ Support:
+<p><a href="https://www.buymeacoffee.com/ktauchathuranga"> <img src="https://img.shields.io/badge/Buymeacoffee-222222?&style=flat-square&logo=buymeacoffee&logoColor=white"></a></p><br>
+
+![github contribution grid snake animation](https://raw.githubusercontent.com/ktauchathuranga/ktauchathuranga/output/github-contribution-grid-snake-dark.svg#gh-dark-mode-only)![github contribution grid snake animation](https://raw.githubusercontent.com/ktauchathuranga/ktauchathuranga/output/github-contribution-grid-snake.svg#gh-light-mode-only)
+
+[![An image of @ktauchathuranga's Holopin badges, which is a link to view their full Holopin profile](https://holopin.me/ktauchathuranga)](https://holopin.io/@ktauchathuranga)
 
