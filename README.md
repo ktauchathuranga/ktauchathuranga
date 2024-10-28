@@ -53,6 +53,19 @@ Python’s syntax is designed to be simple and readable, making it a great langu
 
 ---
 
+### 📊 GitHub Stats
+
+<div align="center">
+  <a href="https://github.com/ktauchathuranga#gh-dark-mode-only">
+    <img src="https://github-readme-streak-stats.herokuapp.com/?user=ktauchathuranga&theme=dark&hide_border=true#gh-dark-mode-only" alt="My GitHub Stats" />
+  </a>
+  <a href="https://github.com/ktauchathuranga#gh-light-mode-only">
+    <img src="https://github-readme-streak-stats.herokuapp.com/?user=ktauchathuranga&theme=greywhite&hide_border=true#gh-light-mode-only" alt="My GitHub Stats" />
+  </a>
+</div>
+
+---
+
 ### ☕ Support:
 <p><a href="https://www.buymeacoffee.com/ktauchathuranga"> <img src="https://img.shields.io/badge/Buymeacoffee-222222?&style=flat-square&logo=buymeacoffee&logoColor=white"></a></p><br>
 
