@@ -22,7 +22,7 @@
 
   <p>
     <a href="https://linkedin.com/in/ktauchathuranga" target="_blank"><img src="https://img.shields.io/badge/-LinkedIn-222222?style=flat-square&logo=Linkedin&logoColor=white&link=https://linkedin.com/in/ktauchathuranga)](https://linkedin.com/in/ktauchathuranga"></a>
-  <a href="https://www.youtube.com/@ktauchathuranga" target="_blank"><img src="https://img.shields.io/badge/-YouTube-222222?style=flat-square&logo=YouTube&logoColor=white&link=https://www.youtube.com/@ktauchathuranga)](https://www.youtube.com/@ktauchathuranga"></a>
+  <a href="https://www.instagram.com/ktauchathuranga" target="_blank"><img src="https://img.shields.io/badge/-Instagram-222222?style=flat-square&logo=YouTube&logoColor=white&link=https://www.youtube.com/@ktauchathuranga)](https://www.instagram.com/ktauchathuranga"></a>
     <a href="https://www.facebook.com/ktauchathuranga" target="_blank"><img src="https://img.shields.io/badge/Facebook-222222?&style=flat-square&logo=facebook&logoColor=white&link=https://www.facebook.com/ktauchathuranga)](https://www.facebook.com/ktauchathuranga"></a>
   </p>
 
