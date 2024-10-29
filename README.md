@@ -36,7 +36,7 @@ Python’s syntax is designed to be simple and readable, making it a great langu
 ## Want to know more about me?
 
 <p>
-  <a href="https://linkedin.com/in/ktauchathuranga" target="_blank"><img src="https://img.shields.io/badge/-LinkedIn-222222?style=flat-square&logo=Linkedin&logoColor=white"></a>
+  <a href="https://x.com/ktauchathuranga" target="_blank"><img src="https://img.shields.io/badge/-X-222222?style=flat-square&logo=X&logoColor=white"></a>
   <a href="https://www.instagram.com/ktauchathuranga" target="_blank"><img src="https://img.shields.io/badge/-Instagram-222222?style=flat-square&logo=Instagram&logoColor=white"></a>
   <a href="https://www.facebook.com/ktauchathuranga" target="_blank"><img src="https://img.shields.io/badge/Facebook-222222?&style=flat-square&logo=facebook&logoColor=white"></a>
 </p>
@@ -67,7 +67,7 @@ Python’s syntax is designed to be simple and readable, making it a great langu
 ---
 
 ### ☕ Support:
-<p><a href="https://www.buymeacoffee.com/ktauchathuranga"> <img src="https://img.shields.io/badge/Buymeacoffee-222222?&style=flat-square&logo=buymeacoffee&logoColor=white"></a></p><br>
+<p><a href="https://www.buymeacoffee.com/ktauchathuranga"> <img src="https://img.shields.io/badge/Buymeacoffee-222222?&style=flat-square&logo=buymeacoffee&logoColor=white"></a></p>
 
 ![github contribution grid snake animation](https://raw.githubusercontent.com/ktauchathuranga/ktauchathuranga/output/github-contribution-grid-snake-dark.svg#gh-dark-mode-only)![github contribution grid snake animation](https://raw.githubusercontent.com/ktauchathuranga/ktauchathuranga/output/github-contribution-grid-snake.svg#gh-light-mode-only)
 
