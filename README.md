@@ -43,7 +43,7 @@ Python’s syntax is designed to be simple and readable, making it a great langu
 
 ---
 
-### 🛠️ Skills <img src="https://media.giphy.com/media/QssGEmpkyEOhBCb7e1/giphy.gif" width="25px">
+### 🛠️ Skills
 ![](https://img.shields.io/badge/Code-PHP-informational?style=flat&logo=php&logoColor=white&color=ffffff)
 ![](https://img.shields.io/badge/Code-C/C%2B%2B-informational?style=flat&logo=c%2B%2B&logoColor=white&color=ffffff)
 ![](https://img.shields.io/badge/Code-Python-informational?style=flat&logo=python&logoColor=white&color=ffffff)
