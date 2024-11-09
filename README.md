@@ -18,7 +18,7 @@
 ---
 
 ### 🌱 Currently Learning
-- **"LIFE"** – Embracing lessons from both programming and life experiences every day.
+- **"LIFE"** – Efforts.
 
 ---
 
