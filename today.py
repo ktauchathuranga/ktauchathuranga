@@ -301,24 +301,24 @@ def flush_cache(edges, filename, comment_size):
             f.write(hashlib.sha256(node['node']['nameWithOwner'].encode('utf-8')).hexdigest() + ' 0 0 0 0\n')
 
 
-def add_archive():
-    """
-    Several repositories I have contributed to have since been deleted.
-    This function adds them using their last known data
-    """
-    with open('cache/repository_archive.txt', 'r') as f:
-        data = f.readlines()
-    old_data = data
-    data = data[7:len(data)-3] # remove the comment block    
-    added_loc, deleted_loc, added_commits = 0, 0, 0
-    contributed_repos = len(data)
-    for line in data:
-        repo_hash, total_commits, my_commits, *loc = line.split()
-        added_loc += int(loc[0])
-        deleted_loc += int(loc[1])
-        if (my_commits.isdigit()): added_commits += int(my_commits)
-    added_commits += int(old_data[-1].split()[4][:-1])
-    return [added_loc, deleted_loc, added_loc - deleted_loc, added_commits, contributed_repos]
+# def add_archive():
+#     """
+#     Several repositories I have contributed to have since been deleted.
+#     This function adds them using their last known data
+#     """
+#     with open('cache/repository_archive.txt', 'r') as f:
+#         data = f.readlines()
+#     old_data = data
+#     data = data[7:len(data)-3] # remove the comment block    
+#     added_loc, deleted_loc, added_commits = 0, 0, 0
+#     contributed_repos = len(data)
+#     for line in data:
+#         repo_hash, total_commits, my_commits, *loc = line.split()
+#         added_loc += int(loc[0])
+#         deleted_loc += int(loc[1])
+#         if (my_commits.isdigit()): added_commits += int(my_commits)
+#     added_commits += int(old_data[-1].split()[4][:-1])
+#     return [added_loc, deleted_loc, added_loc - deleted_loc, added_commits, contributed_repos]
 
 def force_close_file(data, cache_comment):
     """
@@ -469,13 +469,13 @@ if __name__ == '__main__':
     contrib_data, contrib_time = perf_counter(graph_repos_stars, 'repos', ['OWNER', 'COLLABORATOR', 'ORGANIZATION_MEMBER'])
     follower_data, follower_time = perf_counter(follower_getter, USER_NAME)
 
-    # several repositories that I've contributed to have since been deleted.
-    if OWNER_ID == {'id': 'MDQ6VXNlcjU3MzMxMTM0'}: # only calculate for user Andrew6rant
-        archived_data = add_archive()
-        for index in range(len(total_loc)-1):
-            total_loc[index] += archived_data[index]
-        contrib_data += archived_data[-1]
-        commit_data += int(archived_data[-2])
+    # # several repositories that I've contributed to have since been deleted.
+    # if OWNER_ID == {'id': 'MDQ6VXNlcjU3MzMxMTM0'}: # only calculate for user Andrew6rant
+    #     archived_data = add_archive()
+    #     for index in range(len(total_loc)-1):
+    #         total_loc[index] += archived_data[index]
+    #     contrib_data += archived_data[-1]
+    #     commit_data += int(archived_data[-2])
 
     commit_data = formatter('commit counter', commit_time, commit_data, 7)
     star_data = formatter('star counter', star_time, star_data)
