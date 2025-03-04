@@ -583,14 +583,20 @@ if __name__ == '__main__':
     meta = load_metadata()
     last_update = meta["last_update"]
 
-    print("Calculation times:")
+print("Calculation times:")
     (user_info, created_at), user_time = perf_counter(user_getter, USER_NAME)
     OWNER_ID = user_info['id']  # Set OWNER_ID for use in graph_repos_stars
     age_data, age_time = perf_counter(daily_readme, datetime.datetime(2002, 7, 5))
 
     # Always fetch fresh counts regardless of mode
     repo_count, repo_time = perf_counter(graph_repos_stars, 'repos', ['OWNER'])
-    contrib_repo_count, contrib_repo_time = perf_counter(graph_repos_stars, 'commit_repos', ['COLLABORATOR', 'ORGANIZATION_MEMBER'])
+    
+    # Get both counts for contributed repos and combine them
+    contrib_affiliation_count, contrib_affiliation_time = perf_counter(graph_repos_stars, 'repos', ['COLLABORATOR', 'ORGANIZATION_MEMBER'])
+    contrib_commit_count, contrib_commit_time = perf_counter(graph_repos_stars, 'commit_repos', ['COLLABORATOR', 'ORGANIZATION_MEMBER'])
+    contrib_repo_count = contrib_affiliation_count + contrib_commit_count
+    contrib_repo_time = contrib_affiliation_time + contrib_commit_time  # Combine times for reporting
+    
     star_count, star_time = perf_counter(graph_repos_stars, 'stars', ['OWNER'])
     follower_count, follower_time = perf_counter(follower_getter, USER_NAME)
 
@@ -638,7 +644,7 @@ if __name__ == '__main__':
     save_metadata(meta)
 
     # Print performance metrics
-    total_func_time = user_time + age_time + owned_loc_time + contrib_loc_time + star_time + follower_time
+    total_func_time = user_time + age_time + owned_loc_time + contrib_loc_time + star_time + follower_time + contrib_repo_time
     print('\033[F' * 8, '{:<21}'.format('Total function time:'), '{:>11}'.format('%.4f' % total_func_time), ' s')
     print('Total GitHub GraphQL API calls:', '{:>3}'.format(sum(QUERY_COUNT.values())))
     for funct_name, count in QUERY_COUNT.items():
