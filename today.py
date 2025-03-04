@@ -22,7 +22,7 @@ def debug(msg):
 
 
 def daily_readme(birthday):
-    """Returns the length of time since I was born, e.g. 'XX years, XX months, XX days'"""
+    """Returns the time elapsed since your birthday (e.g., 'XX years, XX months, XX days')"""
     diff = relativedelta.relativedelta(datetime.datetime.today(), birthday)
     result = '{} {}, {} {}, {} {}{}'.format(
         diff.years, 'year' + format_plural(diff.years),
@@ -49,7 +49,10 @@ def simple_request(func_name, query, variables):
 
 
 def graph_commits(start_date, end_date):
-    """Returns total commit contributions between two dates (for a specific range)."""
+    """
+    Returns total commit contributions between two dates.
+    (This isn’t used for lifetime counts but is available if needed.)
+    """
     query_count('graph_commits')
     query = '''
     query($start_date: DateTime!, $end_date: DateTime!, $login: String!) {
@@ -70,11 +73,11 @@ def graph_commits(start_date, end_date):
 
 def lifetime_commits():
     """
-    Returns the lifetime total commit contributions (across all branches)
-    using the contributionsCollection from the user’s creation date.
+    Returns lifetime commit contributions across all repositories (both owned and contributed).
+    Note: This query doesn’t allow affiliation filtering.
     """
     user_info, created_at = user_getter(USER_NAME)
-    from_date = created_at  # account creation date as start
+    from_date = created_at  # account creation date
     to_date = datetime.datetime.utcnow().isoformat() + "Z"
     debug(f"lifetime_commits: Calculating from {from_date} to {to_date}")
     query = '''
@@ -93,7 +96,11 @@ def lifetime_commits():
 
 
 def graph_repos_stars(count_type, owner_affiliation, cursor=None, add_loc=0, del_loc=0):
-    """Returns repository count or total stars based on count_type."""
+    """
+    Returns repository count or total stars.
+    For repo count, use affiliation ["OWNER"].
+    For contributed repositories (repos not owned by you), use affiliation ["COLLABORATOR", "ORGANIZATION_MEMBER"].
+    """
     query_count('graph_repos_stars')
     query = '''
     query ($owner_affiliation: [RepositoryAffiliation], $login: String!, $cursor: String) {
@@ -118,7 +125,7 @@ def graph_repos_stars(count_type, owner_affiliation, cursor=None, add_loc=0, del
         }
     }'''
     variables = {'owner_affiliation': owner_affiliation, 'login': USER_NAME, 'cursor': cursor}
-    debug(f"graph_repos_stars: Fetching with cursor {cursor}")
+    debug(f"graph_repos_stars: Fetching with cursor {cursor} for affiliation {owner_affiliation}")
     response = simple_request(graph_repos_stars.__name__, query, variables)
     data = response.json()['data']['user']['repositories']
     if count_type == 'repos':
@@ -133,8 +140,8 @@ def graph_repos_stars(count_type, owner_affiliation, cursor=None, add_loc=0, del
 
 def recursive_loc(owner, repo_name, data, cache_comment, cursor=None, addition_total=0, deletion_total=0, my_commits=0):
     """
-    Aggregates additions, deletions, and commit counts (authored by you)
-    from a repository’s default branch. (Used for LOC caching.)
+    Aggregates additions, deletions, and commit counts (only your commits) 
+    from a repository's default branch. This function is used for building the LOC cache.
     """
     debug(f"recursive_loc: Starting for {owner}/{repo_name} with cursor {cursor}")
     while True:
@@ -190,23 +197,24 @@ def recursive_loc(owner, repo_name, data, cache_comment, cursor=None, addition_t
                     cursor = history['pageInfo']['endCursor']
                     debug(f"recursive_loc: Moving to next page with cursor {cursor}")
             else:
-                debug(f"recursive_loc: Repository {owner}/{repo_name} is empty or missing default branch.")
+                debug(f"recursive_loc: Repository {owner}/{repo_name} is empty or missing a default branch.")
                 return (0, 0, 0)
         else:
             force_close_file(data, cache_comment)
             if response.status_code == 403:
-                raise Exception("Too many requests in a short amount of time! You've hit the non-documented anti-abuse limit!")
+                raise Exception("Too many requests in a short amount of time! You've hit the anti-abuse limit!")
             raise Exception(f'recursive_loc() failed with status: {response.status_code}, response: {response.text}')
     debug(f"recursive_loc: Completed for {owner}/{repo_name} -> commits: {my_commits}, additions: {addition_total}, deletions: {deletion_total}")
     return addition_total, deletion_total, my_commits
 
 
-def loc_query(owner_affiliation, comment_size=0, force_cache=False, cursor=None, edges=[]):
+def loc_query(owner_affiliation, comment_size=0, force_cache=False, cursor=None, edges=[], cache_suffix=""):
     """
-    Retrieves repository data (with pagination) to build/update the LOC cache.
+    Retrieves repository data (with pagination) and builds/updates the LOC cache.
+    The cache file is determined by your username and a cache_suffix (to separate owned vs contributed repos).
     """
     query_count('loc_query')
-    debug(f"loc_query: Fetching repositories with cursor {cursor}")
+    debug(f"loc_query{cache_suffix}: Fetching repositories with cursor {cursor} for affiliation {owner_affiliation}")
     query = '''
     query ($owner_affiliation: [RepositoryAffiliation], $login: String!, $cursor: String) {
         user(login: $login) {
@@ -235,29 +243,30 @@ def loc_query(owner_affiliation, comment_size=0, force_cache=False, cursor=None,
         }
     }'''
     variables = {'owner_affiliation': owner_affiliation, 'login': USER_NAME, 'cursor': cursor}
-    response = simple_request(loc_query.__name__, query, variables)
+    response = simple_request("loc_query", query, variables)
     repos_data = response.json()['data']['user']['repositories']
-    debug(f"loc_query: Retrieved {len(repos_data['edges'])} repositories")
+    debug(f"loc_query{cache_suffix}: Retrieved {len(repos_data['edges'])} repositories")
     if repos_data['pageInfo']['hasNextPage']:
         edges += repos_data['edges']
-        return loc_query(owner_affiliation, comment_size, force_cache, repos_data['pageInfo']['endCursor'], edges)
+        return loc_query(owner_affiliation, comment_size, force_cache, repos_data['pageInfo']['endCursor'], edges, cache_suffix)
     else:
-        return cache_builder(edges + repos_data['edges'], comment_size, force_cache)
+        return cache_builder(edges + repos_data['edges'], comment_size, force_cache, cache_suffix)
 
 
-def cache_builder(edges, comment_size, force_cache, loc_add=0, loc_del=0):
+def cache_builder(edges, comment_size, force_cache, cache_suffix):
     """
     Checks if repository data has changed; rebuilds the LOC cache if needed.
+    The cache file is unique per (username + cache_suffix).
     """
-    debug("cache_builder: Building cache...")
+    debug(f"cache_builder{cache_suffix}: Building cache...")
     cached = True
-    filename = 'cache/' + hashlib.sha256(USER_NAME.encode('utf-8')).hexdigest() + '.txt'
+    filename = 'cache/' + hashlib.sha256((USER_NAME + cache_suffix).encode('utf-8')).hexdigest() + '.txt'
     try:
         with open(filename, 'r') as f:
             data = f.readlines()
-        debug("cache_builder: Cache file found.")
+        debug(f"cache_builder{cache_suffix}: Cache file found.")
     except FileNotFoundError:
-        debug("cache_builder: Cache file not found. Creating new cache.")
+        debug(f"cache_builder{cache_suffix}: Cache file not found. Creating new cache.")
         data = []
         if comment_size > 0:
             for _ in range(comment_size):
@@ -266,9 +275,9 @@ def cache_builder(edges, comment_size, force_cache, loc_add=0, loc_del=0):
             f.writelines(data)
 
     if len(data) - comment_size != len(edges) or force_cache:
-        debug("cache_builder: Cache rebuild needed.")
+        debug(f"cache_builder{cache_suffix}: Cache rebuild needed.")
         cached = False
-        flush_cache(edges, filename, comment_size)
+        flush_cache(edges, filename, comment_size, cache_suffix)
         with open(filename, 'r') as f:
             data = f.readlines()
 
@@ -276,32 +285,34 @@ def cache_builder(edges, comment_size, force_cache, loc_add=0, loc_del=0):
     data = data[comment_size:]
     for index in range(len(edges)):
         repo_hash, commit_count, *__ = data[index].split()
-        if repo_hash == hashlib.sha256(edges[index]['node']['nameWithOwner'].encode('utf-8')).hexdigest():
+        current_hash = hashlib.sha256(edges[index]['node']['nameWithOwner'].encode('utf-8')).hexdigest()
+        if repo_hash == current_hash:
             try:
                 expected_commits = edges[index]['node']['defaultBranchRef']['target']['history']['totalCount']
                 if int(commit_count) != expected_commits:
-                    debug(f"cache_builder: Repository {edges[index]['node']['nameWithOwner']} has updated commits. Recalculating LOC.")
+                    debug(f"cache_builder{cache_suffix}: Repository {edges[index]['node']['nameWithOwner']} updated. Recalculating LOC.")
                     owner, repo_name = edges[index]['node']['nameWithOwner'].split('/')
                     loc = recursive_loc(owner, repo_name, data, cache_comment)
-                    data[index] = repo_hash + ' ' + str(expected_commits) + ' ' + str(loc[2]) + ' ' + str(loc[0]) + ' ' + str(loc[1]) + '\n'
+                    data[index] = current_hash + ' ' + str(expected_commits) + ' ' + str(loc[2]) + ' ' + str(loc[0]) + ' ' + str(loc[1]) + '\n'
             except TypeError:
-                data[index] = repo_hash + ' 0 0 0 0\n'
+                data[index] = current_hash + ' 0 0 0 0\n'
     with open(filename, 'w') as f:
         f.writelines(cache_comment)
         f.writelines(data)
+    loc_add, loc_del = 0, 0
     for line in data:
         loc_values = line.split()
         loc_add += int(loc_values[3])
         loc_del += int(loc_values[4])
-    debug("cache_builder: Cache build complete.")
+    debug(f"cache_builder{cache_suffix}: Cache build complete.")
     return [loc_add, loc_del, loc_add - loc_del, cached]
 
 
-def flush_cache(edges, filename, comment_size):
+def flush_cache(edges, filename, comment_size, cache_suffix):
     """
     Clears the cache file and rebuilds it using the latest repository data.
     """
-    debug("flush_cache: Flushing and rebuilding cache...")
+    debug(f"flush_cache{cache_suffix}: Flushing and rebuilding cache...")
     with open(filename, 'r') as f:
         data = []
         if comment_size > 0:
@@ -310,7 +321,24 @@ def flush_cache(edges, filename, comment_size):
         f.writelines(data)
         for node in edges:
             f.write(hashlib.sha256(node['node']['nameWithOwner'].encode('utf-8')).hexdigest() + ' 0 0 0 0\n')
-    debug("flush_cache: Cache flush complete.")
+    debug(f"flush_cache{cache_suffix}: Cache flush complete.")
+
+
+def commit_counter(comment_size, cache_suffix=""):
+    """
+    Sums up commit counts from the cache file.
+    The cache file is chosen based on (username + cache_suffix).
+    """
+    total_commits = 0
+    filename = 'cache/' + hashlib.sha256((USER_NAME + cache_suffix).encode('utf-8')).hexdigest() + '.txt'
+    with open(filename, 'r') as f:
+        data = f.readlines()
+    # Skip the comment block
+    data = data[comment_size:]
+    for line in data:
+        total_commits += int(line.split()[2])
+    debug(f"commit_counter{cache_suffix}: Total commits counted = {total_commits}")
+    return total_commits
 
 
 def svg_overwrite(filename, age_data, commit_data, star_data, repo_data, contrib_data, follower_data, loc_data):
@@ -333,7 +361,7 @@ def svg_overwrite(filename, age_data, commit_data, star_data, repo_data, contrib
 
 
 def svg_element_getter(filename):
-    """Prints the index and text content of each <tspan> in the SVG."""
+    """Prints each <tspan> element's index and text content in the SVG."""
     svg = minidom.parse(filename)
     tspan = svg.getElementsByTagName('tspan')
     for index in range(len(tspan)):
@@ -342,7 +370,7 @@ def svg_element_getter(filename):
 
 def user_getter(username):
     """
-    Returns a dictionary with the user's ID and their account creation date.
+    Returns a dictionary with your user ID and your account creation date.
     """
     query_count('user_getter')
     query = '''
@@ -354,14 +382,14 @@ def user_getter(username):
     }'''
     variables = {'login': username}
     debug("user_getter: Fetching user data for " + username)
-    response = simple_request(user_getter.__name__, query, variables)
+    response = simple_request("user_getter", query, variables)
     user_data = response.json()['data']['user']
     debug("user_getter: Received user ID " + user_data['id'])
     return {'id': user_data['id']}, user_data['createdAt']
 
 
 def follower_getter(username):
-    """Returns the total number of followers of the user."""
+    """Returns the total number of followers you have."""
     query_count('follower_getter')
     query = '''
     query($login: String!){
@@ -372,7 +400,7 @@ def follower_getter(username):
         }
     }'''
     debug("follower_getter: Fetching followers for " + username)
-    response = simple_request(follower_getter.__name__, query, {'login': username})
+    response = simple_request("follower_getter", query, {'login': username})
     count = int(response.json()['data']['user']['followers']['totalCount'])
     debug("follower_getter: " + str(count) + " followers found.")
     return count
@@ -393,10 +421,7 @@ def query_count(funct_id):
 
 
 def perf_counter(funct, *args):
-    """
-    Measures execution time of a function.
-    Returns a tuple of (function_result, time_elapsed).
-    """
+    """Measures execution time of a function and returns (result, time_elapsed)."""
     start = time.perf_counter()
     result = funct(*args)
     elapsed = time.perf_counter() - start
@@ -405,10 +430,7 @@ def perf_counter(funct, *args):
 
 
 def formatter(query_type, difference, funct_return=False, whitespace=0):
-    """
-    Prints formatted execution time.
-    Optionally returns the formatted function result.
-    """
+    """Prints formatted execution time and optionally formats the function result."""
     print('{:<23}'.format('   ' + query_type + ':'), end='')
     if difference > 1:
         print('{:>12}'.format('%.4f' % difference + ' s '))
@@ -417,6 +439,18 @@ def formatter(query_type, difference, funct_return=False, whitespace=0):
     if whitespace:
         return f"{'{:,}'.format(funct_return): <{whitespace}}"
     return funct_return
+
+
+def force_close_file(data, cache_comment):
+    """
+    Safely closes the cache file by writing any partial data,
+    in case of an unexpected error.
+    """
+    filename = 'cache/' + hashlib.sha256(USER_NAME.encode('utf-8')).hexdigest() + '.txt'
+    with open(filename, 'w') as f:
+        f.writelines(cache_comment)
+        f.writelines(data)
+    debug(f"force_close_file: Partial data saved to {filename}")
 
 
 if __name__ == '__main__':
@@ -430,28 +464,51 @@ if __name__ == '__main__':
     (user_info, created_at), user_time = perf_counter(user_getter, USER_NAME)
     # Extract OWNER_ID for commit comparisons
     OWNER_ID = user_info['id']
+    
     age_data, age_time = perf_counter(daily_readme, datetime.datetime(2002, 7, 5))
-    total_loc, loc_time = perf_counter(loc_query, ['OWNER', 'COLLABORATOR', 'ORGANIZATION_MEMBER'], 7, force_cache_flag)
+    
+    # Retrieve LOC and commit counts for your own repositories (owned)
+    owned_loc, owned_loc_time = perf_counter(loc_query, ['OWNER'], 7, force_cache_flag, None, [], "_owner")
+    owned_commit_data = commit_counter(7, "_owner")
+    
+    # Retrieve LOC and commit counts for contributions to repositories you don't own
+    contrib_loc, contrib_loc_time = perf_counter(loc_query, ['COLLABORATOR', 'ORGANIZATION_MEMBER'], 7, force_cache_flag, None, [], "_contrib")
+    contrib_commit_data = commit_counter(7, "_contrib")
+    
+    # Repository counts: owned repos and contributed repos (non-owned)
+    repo_data = perf_counter(graph_repos_stars, 'repos', ['OWNER'])[0]
+    contrib_repo_data = perf_counter(graph_repos_stars, 'repos', ['COLLABORATOR', 'ORGANIZATION_MEMBER'])[0]
+    
+    # Lifetime commits (all contributions, note: this includes both owned and contributed)
     lifetime_commit_data, lifetime_commit_time = perf_counter(lifetime_commits)
+    
     star_data, star_time = perf_counter(graph_repos_stars, 'stars', ['OWNER'])
-    repo_data, repo_time = perf_counter(graph_repos_stars, 'repos', ['OWNER'])
-    contrib_data, contrib_time = perf_counter(graph_repos_stars, 'repos', ['OWNER', 'COLLABORATOR', 'ORGANIZATION_MEMBER'])
     follower_data, follower_time = perf_counter(follower_getter, USER_NAME)
-
-    lifetime_commit_data = formatter('lifetime commits', lifetime_commit_time, lifetime_commit_data, 7)
+    
+    # Format numbers for display
+    repo_data = formatter('my repositories', 0, repo_data, 2)
+    contrib_repo_data = formatter('contributed repos', 0, contrib_repo_data, 2)
     star_data = formatter('star counter', star_time, star_data)
-    repo_data = formatter('my repositories', repo_time, repo_data, 2)
-    contrib_data = formatter('contributed repos', contrib_time, contrib_data, 2)
-    follower_data = formatter('follower counter', follower_time, follower_data, 4)
-
-    # Format LOC numbers for display
-    for index in range(len(total_loc) - 1):
-        total_loc[index] = '{:,}'.format(total_loc[index])
-
-    svg_overwrite('dark_mode.svg', age_data, lifetime_commit_data, star_data, repo_data, contrib_data, follower_data, total_loc[:-1])
-    svg_overwrite('light_mode.svg', age_data, lifetime_commit_data, star_data, repo_data, contrib_data, follower_data, total_loc[:-1])
-
-    total_func_time = user_time + age_time + loc_time + lifetime_commit_time + star_time + repo_time + contrib_time
+    # For commits, we'll show the contributed commits (non-owned) only as requested
+    contrib_commit_data = formatter('contrib commits', contrib_loc_time, contrib_commit_data, 7)
+    
+    # Format LOC numbers (we use LOC from contributed repos here)
+    for index in range(len(contrib_loc) - 1):
+        contrib_loc[index] = '{:,}'.format(contrib_loc[index])
+    
+    # Overwrite both dark and light mode SVGs with the updated stats.
+    # Here, we display:
+    #   - Age
+    #   - Contributed commits (non-owned)
+    #   - Star count
+    #   - Owned repo count
+    #   - Contributed repo count
+    #   - Follower count
+    #   - LOC details (from contributed repos)
+    svg_overwrite('dark_mode.svg', age_data, contrib_commit_data, star_data, str(repo_data), str(contrib_repo_data), str(follower_data), contrib_loc[:-1])
+    svg_overwrite('light_mode.svg', age_data, contrib_commit_data, star_data, str(repo_data), str(contrib_repo_data), str(follower_data), contrib_loc[:-1])
+    
+    total_func_time = user_time + age_time + owned_loc_time + contrib_loc_time + lifetime_commit_time + star_time + follower_time
     print('\033[F\033[F\033[F\033[F\033[F\033[F\033[F\033[F',
           '{:<21}'.format('Total function time:'), '{:>11}'.format('%.4f' % total_func_time),
           ' s \033[E\033[E\033[E\033[E\033[E\033[E\033[E\033[E', sep='')
