@@ -23,7 +23,8 @@ QUERY_COUNT = {
     'graph_repos_stars': 0,
     'recursive_loc': 0,
     'graph_commits': 0,
-    'loc_query': 0
+    'loc_query': 0,
+    'graph_repos_commits': 0  # Add this
 }
 
 # ----------------------- Debug Function -----------------------
@@ -465,6 +466,51 @@ def incremental_cache_update(cache_suffix, owner_affiliation, last_update, comme
     debug(f"incremental_cache_update{cache_suffix}: Updated cache. Total LOC added: {loc_add}, deleted: {loc_del}")
     return [loc_add, loc_del, loc_add - loc_del, True]
 
+
+def count_repos_with_commits(owner_affiliation, cursor=None, repos_with_commits=None):
+    if repos_with_commits is None:
+        repos_with_commits = set()  # Use a set to avoid duplicates
+    query_count('graph_repos_commits')
+    query = '''
+    query ($owner_affiliation: [RepositoryAffiliation], $login: String!, $cursor: String) {
+        user(login: $login) {
+            repositories(first: 100, after: $cursor, ownerAffiliations: $owner_affiliation) {
+                edges {
+                    node {
+                        nameWithOwner
+                        defaultBranchRef {
+                            target {
+                                ... on Commit {
+                                    history(first: 1, author: {id: $login}) {
+                                        totalCount
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+                pageInfo {
+                    endCursor
+                    hasNextPage
+                }
+            }
+        }
+    }'''
+    variables = {'owner_affiliation': owner_affiliation, 'login': USER_NAME, 'cursor': cursor}
+    debug(f"count_repos_with_commits: Fetching with cursor {cursor} for affiliation {owner_affiliation}")
+    response = simple_request("count_repos_with_commits", query, variables)
+    data = response.json()['data']['user']['repositories']
+    for edge in data['edges']:
+        node = edge['node']
+        # Check if the user has at least one commit in the repo
+        if (node['defaultBranchRef'] and 
+            node['defaultBranchRef']['target']['history']['totalCount'] > 0):
+            repos_with_commits.add(node['nameWithOwner'])
+    if data['pageInfo']['hasNextPage']:
+        return count_repos_with_commits(owner_affiliation, data['pageInfo']['endCursor'], repos_with_commits)
+    debug(f"count_repos_with_commits: Found {len(repos_with_commits)} repos with commits")
+    return len(repos_with_commits)
+
 # ----------------------- Main Execution -----------------------
 
 if __name__ == '__main__':
@@ -492,7 +538,7 @@ if __name__ == '__main__':
 
     # Always fetch fresh counts regardless of mode
     repo_count, repo_time = perf_counter(graph_repos_stars, 'repos', ['OWNER'])
-    contrib_repo_count, contrib_repo_time = perf_counter(graph_repos_stars, 'repos', ['COLLABORATOR', 'ORGANIZATION_MEMBER'])
+    contrib_repo_count, contrib_repo_time = perf_counter(count_repos_with_commits, ['COLLABORATOR', 'ORGANIZATION_MEMBER'])
     star_count, star_time = perf_counter(graph_repos_stars, 'stars', ['OWNER'])
     follower_count, follower_time = perf_counter(follower_getter, USER_NAME)
 
