@@ -10,19 +10,13 @@ import sys
 
 # ----------------------- Configuration -----------------------
 
-# Set DEBUG to True to enable verbose debug output.
 DEBUG = True
-
-# GitHub Personal Access Token must be set in environment variable.
 HEADERS = {'authorization': 'token ' + os.environ['ACCESS_TOKEN']}
-USER_NAME = os.environ['USER_NAME']  # e.g., "ktauchathuranga"
-
-# Directory to store cache and metadata.
+USER_NAME = "os.environ['USER_NAME']"
 CACHE_DIR = "cache"
 if not os.path.exists(CACHE_DIR):
     os.makedirs(CACHE_DIR)
 
-# Global counter for API calls.
 QUERY_COUNT = {
     'user_getter': 0,
     'follower_getter': 0,
@@ -45,23 +39,31 @@ def format_plural(unit):
 
 def load_metadata():
     meta_path = os.path.join(CACHE_DIR, "meta.json")
+    default_meta = {
+        "last_update": "2000-01-01T00:00:00Z",
+        "repo_count": 0,
+        "contrib_repo_count": 0,
+        "star_count": 0,
+        "follower_count": 0
+    }
     if os.path.exists(meta_path):
         with open(meta_path, 'r') as f:
             meta = json.load(f)
+        # Ensure all keys exist
+        for key in default_meta:
+            if key not in meta:
+                meta[key] = default_meta[key]
         debug("Loaded metadata: " + str(meta))
         return meta
     else:
-        # If metadata doesn't exist, set an old timestamp.
-        old_ts = "2000-01-01T00:00:00Z"
-        debug("No metadata found. Using default timestamp " + old_ts)
-        return {"last_update": old_ts}
+        debug("No metadata found. Using default metadata.")
+        return default_meta
 
-def save_metadata(new_timestamp):
+def save_metadata(meta):
     meta_path = os.path.join(CACHE_DIR, "meta.json")
-    meta = {"last_update": new_timestamp}
     with open(meta_path, 'w') as f:
         json.dump(meta, f)
-    debug("Saved new metadata with timestamp " + new_timestamp)
+    debug("Saved metadata: " + str(meta))
 
 def simple_request(func_name, query, variables):
     debug(f"{func_name}: Sending request with variables {variables}")
@@ -245,7 +247,6 @@ def recursive_loc(owner, repo_name, data, cache_comment, cursor=None, addition_t
                 debug(f"recursive_loc: Repository {owner}/{repo_name} is empty or missing default branch.")
                 return (0, 0, 0)
         else:
-            # Save partial data and then raise an error.
             filename = os.path.join(CACHE_DIR, hashlib.sha256(USER_NAME.encode('utf-8')).hexdigest() + '.txt')
             force_close_file(data, cache_comment, filename)
             if response.status_code == 403:
@@ -324,7 +325,6 @@ def cache_builder(edges, comment_size, force_cache, cache_suffix):
     new_data = []
     for index in range(len(edges)):
         current_hash = hashlib.sha256(edges[index]['node']['nameWithOwner'].encode('utf-8')).hexdigest()
-        # If existing entry exists, update if needed.
         try:
             repo_hash, commit_count, *rest = data[index].split()
         except IndexError:
@@ -342,7 +342,6 @@ def cache_builder(edges, comment_size, force_cache, cache_suffix):
             except (TypeError, IndexError):
                 new_data.append(current_hash + ' 0 0 0 0\n')
         else:
-            # New repository not in cache; calculate full data.
             debug(f"cache_builder{cache_suffix}: New repository found: {edges[index]['node']['nameWithOwner']}. Calculating data.")
             owner, repo_name = edges[index]['node']['nameWithOwner'].split('/')
             loc = recursive_loc(owner, repo_name, data, cache_comment)
@@ -398,26 +397,7 @@ def svg_overwrite(filename, age_data, commit_data, star_data, repo_data, contrib
         f.write(svg.toxml('utf-8').decode('utf-8'))
     debug(f"svg_overwrite: Finished updating {filename}")
 
-def svg_element_getter(filename):
-    svg = minidom.parse(filename)
-    tspan = svg.getElementsByTagName('tspan')
-    for index in range(len(tspan)):
-        debug(f"svg_element_getter: Element {index} - {tspan[index].firstChild.data}")
-
-# ----------------------- Incremental Update Functions -----------------------
-
 def get_repos_updated_since(last_update, owner_affiliation):
-    """
-    Returns a list of repository nodes (with nameWithOwner and updatedAt)
-    that have been updated after last_update.
-    
-    Args:
-        last_update (str): The timestamp to filter repositories by.
-        owner_affiliation (list): List of repository affiliations (e.g., ['OWNER']).
-    
-    Returns:
-        list: Repositories updated since last_update.
-    """
     query = '''
     query($login: String!, $ownerAffiliations: [RepositoryAffiliation]) {
       user(login: $login) {
@@ -435,8 +415,7 @@ def get_repos_updated_since(last_update, owner_affiliation):
     response = simple_request("get_repos_updated_since", query, variables)
     json_data = response.json()
     if 'data' not in json_data:
-        print("Error: Response JSON:", json_data)
-        raise Exception("GraphQL response missing 'data' key. See errors above.")
+        raise Exception("GraphQL response missing 'data' key.")
     updated_repos = []
     for edge in json_data['data']['user']['repositories']['edges']:
         repo = edge['node']
@@ -444,18 +423,10 @@ def get_repos_updated_since(last_update, owner_affiliation):
             updated_repos.append(repo)
     debug(f"get_repos_updated_since: {len(updated_repos)} repos updated since {last_update}")
     return updated_repos
-    
+
 def update_cache_for_repo(repo, cache_suffix, comment_size=7):
-    """
-    For a given repo (dict with at least nameWithOwner), update its cache entry.
-    """
     owner, repo_name = repo['nameWithOwner'].split('/')
-    # For simplicity, we recalc using recursive_loc
     updated_data = recursive_loc(owner, repo_name, [], [])
-    # Get expected commit count if available.
-    expected_commits = 0
-    # To get expected_commits, you might need to call a lightweight query;
-    # here we assume recursive_loc already did it.
     expected_commits = updated_data[2]
     current_hash = hashlib.sha256(repo['nameWithOwner'].encode('utf-8')).hexdigest()
     new_entry = current_hash + ' ' + str(expected_commits) + ' ' + str(updated_data[2]) + ' ' + str(updated_data[0]) + ' ' + str(updated_data[1]) + '\n'
@@ -463,15 +434,8 @@ def update_cache_for_repo(repo, cache_suffix, comment_size=7):
     return new_entry
 
 def incremental_cache_update(cache_suffix, owner_affiliation, last_update, comment_size=7, force_cache=False):
-    """
-    Loads the existing cache, checks for repositories updated since last_update,
-    and updates only those entries. Returns updated LOC values.
-    """
-    # Get the list of repos updated since last_update.
     updated_repos = get_repos_updated_since(last_update, owner_affiliation)
-    # Build the cache file path.
     filename = os.path.join(CACHE_DIR, hashlib.sha256((USER_NAME + cache_suffix).encode('utf-8')).hexdigest() + '.txt')
-    # Load existing cache data.
     try:
         with open(filename, 'r') as f:
             data = f.readlines()
@@ -479,23 +443,19 @@ def incremental_cache_update(cache_suffix, owner_affiliation, last_update, comme
         debug("Cache file not found for incremental update. Running full cache rebuild.")
         return loc_query(owner_affiliation, comment_size, force_cache, cache_suffix=cache_suffix)
     
-    # Convert cache to a dict for quick lookup.
     cache_dict = {}
     for line in data[comment_size:]:
         parts = line.split()
         if parts:
             cache_dict[parts[0]] = line
-    # For each updated repo, update its entry.
     for repo in updated_repos:
         current_hash = hashlib.sha256(repo['nameWithOwner'].encode('utf-8')).hexdigest()
         new_entry = update_cache_for_repo(repo, cache_suffix, comment_size)
         cache_dict[current_hash] = new_entry
-    # Rebuild cache lines preserving comment block.
     comment_block = data[:comment_size] if len(data) >= comment_size else []
     new_cache_lines = comment_block + list(cache_dict.values())
     with open(filename, 'w') as f:
         f.writelines(new_cache_lines)
-    # Aggregate LOC values.
     loc_add, loc_del = 0, 0
     for line in new_cache_lines[comment_size:]:
         parts = line.split()
@@ -521,58 +481,64 @@ if __name__ == '__main__':
         print("Usage: python today.py --full-cache | --incremental-update")
         sys.exit(1)
 
-    # Load metadata once at the start
+    # Load metadata
     meta = load_metadata()
-    last_update = meta.get("last_update")
+    last_update = meta["last_update"]
 
     print("Calculation times:")
     (user_info, created_at), user_time = perf_counter(user_getter, USER_NAME)
     OWNER_ID = user_info['id']
     age_data, age_time = perf_counter(daily_readme, datetime.datetime(2002, 7, 5))
 
-    # For owned repositories
     if mode == "full":
+        # Fetch fresh data
+        repo_count, repo_time = perf_counter(graph_repos_stars, 'repos', ['OWNER'])
+        contrib_repo_count, contrib_repo_time = perf_counter(graph_repos_stars, 'repos', ['COLLABORATOR', 'ORGANIZATION_MEMBER'])
+        star_count, star_time = perf_counter(graph_repos_stars, 'stars', ['OWNER'])
+        follower_count, follower_time = perf_counter(follower_getter, USER_NAME)
+        # Update caches
         owned_loc, owned_loc_time = perf_counter(loc_query, ['OWNER'], 7, True, None, [], "_owner")
-    else:
-        owned_loc, owned_loc_time = perf_counter(incremental_cache_update, "_owner", ['OWNER'], last_update, 7, False)
-    owned_commit_data = commit_counter(7, "_owner")
-
-    # For contributed repositories
-    if mode == "full":
         contrib_loc, contrib_loc_time = perf_counter(loc_query, ['COLLABORATOR', 'ORGANIZATION_MEMBER'], 7, True, None, [], "_contrib")
-    else:
+        # Update metadata
+        meta["repo_count"] = repo_count
+        meta["contrib_repo_count"] = contrib_repo_count
+        meta["star_count"] = star_count
+        meta["follower_count"] = follower_count
+    else:  # Incremental mode
+        # Use cached data from metadata
+        repo_count = meta["repo_count"]
+        contrib_repo_count = meta["contrib_repo_count"]
+        star_count = meta["star_count"]
+        follower_count = meta["follower_count"]
+        # Update repository-specific caches only
+        owned_loc, owned_loc_time = perf_counter(incremental_cache_update, "_owner", ['OWNER'], last_update, 7, False)
         contrib_loc, contrib_loc_time = perf_counter(incremental_cache_update, "_contrib", ['COLLABORATOR', 'ORGANIZATION_MEMBER'], last_update, 7, False)
+        # Set timing to zero since no API calls were made
+        repo_time = contrib_repo_time = star_time = follower_time = 0
+
+    # Calculate commit data from cache
+    owned_commit_data = commit_counter(7, "_owner")
     contrib_commit_data = commit_counter(7, "_contrib")
 
-    # Update metadata after all cache operations
-    new_timestamp = datetime.datetime.utcnow().isoformat() + "Z"
-    save_metadata(new_timestamp)
-
-    # Repository counts
-    repo_data = perf_counter(graph_repos_stars, 'repos', ['OWNER'])[0]
-    contrib_repo_data = perf_counter(graph_repos_stars, 'repos', ['COLLABORATOR', 'ORGANIZATION_MEMBER'])[0]
-
-    # Lifetime commits (all contributions; note this includes both owned and contributed)
-    lifetime_commit_data, lifetime_commit_time = perf_counter(lambda: 0)  # Placeholder if not needed
-
-    star_data, star_time = perf_counter(graph_repos_stars, 'stars', ['OWNER'])
-    follower_data, follower_time = perf_counter(follower_getter, USER_NAME)
-
-    # Format numbers for display (for SVG update)
-    repo_data = formatter('my repositories', 0, repo_data, 2)
-    contrib_repo_data = formatter('contributed repos', 0, contrib_repo_data, 2)
-    star_data = formatter('star counter', star_time, star_data)
-    # We show contributed commit count (non-owned) as requested.
+    # Format data for SVG
+    repo_data = formatter('my repositories', repo_time, repo_count, 2)
+    contrib_data = formatter('contributed repos', contrib_repo_time, contrib_repo_count, 2)
+    star_data = formatter('star counter', star_time, star_count)
+    follower_data = formatter('follower counter', follower_time, follower_count)
     contrib_commit_data = formatter('contrib commits', contrib_loc_time, contrib_commit_data, 7)
-
-    # Format LOC numbers (using contributed LOC here as an example)
     for index in range(len(contrib_loc) - 1):
         contrib_loc[index] = '{:,}'.format(contrib_loc[index])
 
-    # Update SVG files (assuming you have dark_mode.svg and light_mode.svg in your repo)
-    svg_overwrite('dark_mode.svg', age_data, contrib_commit_data, star_data, str(repo_data), str(contrib_repo_data), str(follower_data), contrib_loc[:-1])
-    svg_overwrite('light_mode.svg', age_data, contrib_commit_data, star_data, str(repo_data), str(contrib_repo_data), str(follower_data), contrib_loc[:-1])
+    # Overwrite SVG files using cached data
+    svg_overwrite('dark_mode.svg', age_data, contrib_commit_data, star_data, repo_data, contrib_data, follower_data, contrib_loc[:-1])
+    svg_overwrite('light_mode.svg', age_data, contrib_commit_data, star_data, repo_data, contrib_data, follower_data, contrib_loc[:-1])
 
+    # Update metadata with new timestamp
+    new_timestamp = datetime.datetime.utcnow().isoformat() + "Z"
+    meta["last_update"] = new_timestamp
+    save_metadata(meta)
+
+    # Print performance metrics
     total_func_time = user_time + age_time + owned_loc_time + contrib_loc_time + star_time + follower_time
     print('\033[F' * 8, '{:<21}'.format('Total function time:'), '{:>11}'.format('%.4f' % total_func_time), ' s')
     print('Total GitHub GraphQL API calls:', '{:>3}'.format(sum(QUERY_COUNT.values())))
