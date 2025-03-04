@@ -472,7 +472,7 @@ def count_repos_with_commits(owner_affiliation, cursor=None, repos_with_commits=
         repos_with_commits = set()  # Use a set to avoid duplicates
     query_count('graph_repos_commits')
     query = '''
-    query ($owner_affiliation: [RepositoryAffiliation], $login: String!, $cursor: String) {
+    query ($owner_affiliation: [RepositoryAffiliation], $login: String!, $cursor: String, $userId: ID!) {
         user(login: $login) {
             repositories(first: 100, after: $cursor, ownerAffiliations: $owner_affiliation) {
                 edges {
@@ -481,7 +481,7 @@ def count_repos_with_commits(owner_affiliation, cursor=None, repos_with_commits=
                         defaultBranchRef {
                             target {
                                 ... on Commit {
-                                    history(first: 1, author: {id: $login}) {
+                                    history(first: 1, author: {id: $userId}) {
                                         totalCount
                                     }
                                 }
@@ -496,10 +496,25 @@ def count_repos_with_commits(owner_affiliation, cursor=None, repos_with_commits=
             }
         }
     }'''
-    variables = {'owner_affiliation': owner_affiliation, 'login': USER_NAME, 'cursor': cursor}
+    variables = {
+        'owner_affiliation': owner_affiliation,
+        'login': USER_NAME,
+        'cursor': cursor,
+        'userId': OWNER_ID  # Use the user's node ID
+    }
     debug(f"count_repos_with_commits: Fetching with cursor {cursor} for affiliation {owner_affiliation}")
     response = simple_request("count_repos_with_commits", query, variables)
-    data = response.json()['data']['user']['repositories']
+    json_response = response.json()
+    
+    # Check for GraphQL errors
+    if 'errors' in json_response:
+        debug(f"count_repos_with_commits: GraphQL errors: {json_response['errors']}")
+        raise Exception(f"GraphQL errors in count_repos_with_commits: {json_response['errors']}")
+    if 'data' not in json_response or json_response['data'] is None:
+        debug(f"count_repos_with_commits: No data in response: {json_response}")
+        raise Exception(f"No data returned in count_repos_with_commits: {json_response}")
+    
+    data = json_response['data']['user']['repositories']
     for edge in data['edges']:
         node = edge['node']
         # Check if the user has at least one commit in the repo
@@ -510,7 +525,6 @@ def count_repos_with_commits(owner_affiliation, cursor=None, repos_with_commits=
         return count_repos_with_commits(owner_affiliation, data['pageInfo']['endCursor'], repos_with_commits)
     debug(f"count_repos_with_commits: Found {len(repos_with_commits)} repos with commits")
     return len(repos_with_commits)
-
 # ----------------------- Main Execution -----------------------
 
 if __name__ == '__main__':
