@@ -516,7 +516,7 @@ if __name__ == '__main__':
             mode = "incremental"
             debug("Running in incremental update mode.")
     if mode is None:
-        print("Usage: python cache_update.py --full-cache | --incremental-update")
+        print("Usage: python today.py --full-cache | --incremental-update")
         sys.exit(1)
 
     print("Calculation times:")
