@@ -410,11 +410,18 @@ def get_repos_updated_since(last_update, owner_affiliation):
     """
     Returns a list of repository nodes (with nameWithOwner and updatedAt)
     that have been updated after last_update.
+    
+    Args:
+        last_update (str): The timestamp to filter repositories by.
+        owner_affiliation (list): List of repository affiliations (e.g., ['OWNER']).
+    
+    Returns:
+        list: Repositories updated since last_update.
     """
     query = '''
-    query($login: String!) {
+    query($login: String!, $ownerAffiliations: [RepositoryAffiliation]) {
       user(login: $login) {
-        repositories(first: 100, ownerAffiliations: %s) {
+        repositories(first: 100, ownerAffiliations: $ownerAffiliations) {
           edges {
             node {
               nameWithOwner
@@ -423,17 +430,21 @@ def get_repos_updated_since(last_update, owner_affiliation):
           }
         }
       }
-    }''' % (json.dumps(owner_affiliation))
-    variables = {'login': USER_NAME}
+    }'''
+    variables = {'login': USER_NAME, 'ownerAffiliations': owner_affiliation}
     response = simple_request("get_repos_updated_since", query, variables)
+    json_data = response.json()
+    if 'data' not in json_data:
+        print("Error: Response JSON:", json_data)
+        raise Exception("GraphQL response missing 'data' key. See errors above.")
     updated_repos = []
-    for edge in response.json()['data']['user']['repositories']['edges']:
+    for edge in json_data['data']['user']['repositories']['edges']:
         repo = edge['node']
         if repo['updatedAt'] > last_update:
             updated_repos.append(repo)
     debug(f"get_repos_updated_since: {len(updated_repos)} repos updated since {last_update}")
     return updated_repos
-
+    
 def update_cache_for_repo(repo, cache_suffix, comment_size=7):
     """
     For a given repo (dict with at least nameWithOwner), update its cache entry.
