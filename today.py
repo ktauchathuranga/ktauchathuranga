@@ -583,7 +583,7 @@ if __name__ == '__main__':
     meta = load_metadata()
     last_update = meta["last_update"]
 
-print("Calculation times:")
+    print("Calculation times:")
     (user_info, created_at), user_time = perf_counter(user_getter, USER_NAME)
     OWNER_ID = user_info['id']  # Set OWNER_ID for use in graph_repos_stars
     age_data, age_time = perf_counter(daily_readme, datetime.datetime(2002, 7, 5))
