@@ -451,13 +451,11 @@ def update_cache_for_repo(repo, cache_suffix, comment_size=7):
     debug(f"update_cache_for_repo: Updated {repo['nameWithOwner']} with new entry: {new_entry.strip()}")
     return new_entry
 
-def incremental_cache_update(cache_suffix, owner_affiliation, comment_size=7, force_cache=False):
+def incremental_cache_update(cache_suffix, owner_affiliation, last_update, comment_size=7, force_cache=False):
     """
-    Loads the existing cache, checks for repositories updated since the last update,
-    and updates only those entries. Then saves the updated cache and metadata.
+    Loads the existing cache, checks for repositories updated since last_update,
+    and updates only those entries. Returns updated LOC values.
     """
-    meta = load_metadata()
-    last_update = meta.get("last_update")
     # Get the list of repos updated since last_update.
     updated_repos = get_repos_updated_since(last_update, owner_affiliation)
     # Build the cache file path.
@@ -468,12 +466,10 @@ def incremental_cache_update(cache_suffix, owner_affiliation, comment_size=7, fo
             data = f.readlines()
     except FileNotFoundError:
         debug("Cache file not found for incremental update. Running full cache rebuild.")
-        # If no cache, run full cache.
         return loc_query(owner_affiliation, comment_size, force_cache, cache_suffix=cache_suffix)
     
     # Convert cache to a dict for quick lookup.
     cache_dict = {}
-    # Skip comment block.
     for line in data[comment_size:]:
         parts = line.split()
         if parts:
@@ -488,10 +484,7 @@ def incremental_cache_update(cache_suffix, owner_affiliation, comment_size=7, fo
     new_cache_lines = comment_block + list(cache_dict.values())
     with open(filename, 'w') as f:
         f.writelines(new_cache_lines)
-    # Update metadata with current time.
-    new_timestamp = datetime.datetime.utcnow().isoformat() + "Z"
-    save_metadata(new_timestamp)
-    # Return aggregated LOC values (example: sum of added, deleted, diff)
+    # Aggregate LOC values.
     loc_add, loc_del = 0, 0
     for line in new_cache_lines[comment_size:]:
         parts = line.split()
@@ -504,9 +497,7 @@ def incremental_cache_update(cache_suffix, owner_affiliation, comment_size=7, fo
 # ----------------------- Main Execution -----------------------
 
 if __name__ == '__main__':
-    # Usage:
-    #   --full-cache         Rebuild the full cache from scratch.
-    #   --incremental-update Run incremental update (using metadata and only updated repos)
+    # Parse command-line arguments
     mode = None
     if len(sys.argv) > 1:
         if sys.argv[1] == "--full-cache":
@@ -519,24 +510,32 @@ if __name__ == '__main__':
         print("Usage: python today.py --full-cache | --incremental-update")
         sys.exit(1)
 
+    # Load metadata once at the start
+    meta = load_metadata()
+    last_update = meta.get("last_update")
+
     print("Calculation times:")
     (user_info, created_at), user_time = perf_counter(user_getter, USER_NAME)
     OWNER_ID = user_info['id']
     age_data, age_time = perf_counter(daily_readme, datetime.datetime(2002, 7, 5))
 
-    # For owned repositories (your own repos)
+    # For owned repositories
     if mode == "full":
         owned_loc, owned_loc_time = perf_counter(loc_query, ['OWNER'], 7, True, None, [], "_owner")
     else:
-        owned_loc, owned_loc_time = perf_counter(incremental_cache_update, "_owner", ['OWNER'], 7, False)
+        owned_loc, owned_loc_time = perf_counter(incremental_cache_update, "_owner", ['OWNER'], last_update, 7, False)
     owned_commit_data = commit_counter(7, "_owner")
 
-    # For contributed repositories (repos you contributed to, not owned)
+    # For contributed repositories
     if mode == "full":
         contrib_loc, contrib_loc_time = perf_counter(loc_query, ['COLLABORATOR', 'ORGANIZATION_MEMBER'], 7, True, None, [], "_contrib")
     else:
-        contrib_loc, contrib_loc_time = perf_counter(incremental_cache_update, "_contrib", ['COLLABORATOR', 'ORGANIZATION_MEMBER'], 7, False)
+        contrib_loc, contrib_loc_time = perf_counter(incremental_cache_update, "_contrib", ['COLLABORATOR', 'ORGANIZATION_MEMBER'], last_update, 7, False)
     contrib_commit_data = commit_counter(7, "_contrib")
+
+    # Update metadata after all cache operations
+    new_timestamp = datetime.datetime.utcnow().isoformat() + "Z"
+    save_metadata(new_timestamp)
 
     # Repository counts
     repo_data = perf_counter(graph_repos_stars, 'repos', ['OWNER'])[0]
