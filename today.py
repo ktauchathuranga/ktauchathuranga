@@ -586,7 +586,7 @@ if __name__ == '__main__':
     print("Calculation times:")
     (user_info, created_at), user_time = perf_counter(user_getter, USER_NAME)
     OWNER_ID = user_info['id']  # Set OWNER_ID for use in graph_repos_stars
-    age_data, age_time = perf_counter(daily_readme, datetime.datetime(2002, 7, 5))
+    age_data, age_time = perf_counter(daily_readme, datetime.datetime(2002, 9, 19))
 
     # Always fetch fresh counts regardless of mode
     repo_count, repo_time = perf_counter(graph_repos_stars, 'repos', ['OWNER'])
