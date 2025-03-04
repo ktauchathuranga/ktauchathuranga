@@ -12,7 +12,7 @@ import sys
 
 DEBUG = True
 HEADERS = {'authorization': 'token ' + os.environ['ACCESS_TOKEN']}
-USER_NAME = "os.environ['USER_NAME']"
+USER_NAME = os.environ['USER_NAME']
 CACHE_DIR = "cache"
 if not os.path.exists(CACHE_DIR):
     os.makedirs(CACHE_DIR)
@@ -516,22 +516,30 @@ if __name__ == '__main__':
         # Set timing to zero since no API calls were made
         repo_time = contrib_repo_time = star_time = follower_time = 0
 
-    # Calculate commit data from cache
+    # Calculate commit data from both caches
     owned_commit_data = commit_counter(7, "_owner")
     contrib_commit_data = commit_counter(7, "_contrib")
+    total_commit_data = owned_commit_data + contrib_commit_data  # Sum commits from both
+
+    # Combine LOC data from both caches
+    total_loc = [
+        owned_loc[0] + contrib_loc[0],  # Total lines added
+        owned_loc[1] + contrib_loc[1],  # Total lines deleted
+        owned_loc[2] + contrib_loc[2]   # Net lines (added - deleted)
+    ]
 
     # Format data for SVG
     repo_data = formatter('my repositories', repo_time, repo_count, 2)
     contrib_data = formatter('contributed repos', contrib_repo_time, contrib_repo_count, 2)
     star_data = formatter('star counter', star_time, star_count)
     follower_data = formatter('follower counter', follower_time, follower_count)
-    contrib_commit_data = formatter('contrib commits', contrib_loc_time, contrib_commit_data, 7)
-    for index in range(len(contrib_loc) - 1):
-        contrib_loc[index] = '{:,}'.format(contrib_loc[index])
+    total_commit_data_formatted = formatter('total commits', owned_loc_time + contrib_loc_time, total_commit_data, 7)
+    for index in range(len(total_loc)):
+        total_loc[index] = '{:,}'.format(total_loc[index])  # Format all elements
 
-    # Overwrite SVG files using cached data
-    svg_overwrite('dark_mode.svg', age_data, contrib_commit_data, star_data, repo_data, contrib_data, follower_data, contrib_loc[:-1])
-    svg_overwrite('light_mode.svg', age_data, contrib_commit_data, star_data, repo_data, contrib_data, follower_data, contrib_loc[:-1])
+    # Overwrite SVG files using combined data
+    svg_overwrite('dark_mode.svg', age_data, total_commit_data_formatted, star_data, repo_data, contrib_data, follower_data, total_loc)
+    svg_overwrite('light_mode.svg', age_data, total_commit_data_formatted, star_data, repo_data, contrib_data, follower_data, total_loc)
 
     # Update metadata with new timestamp
     new_timestamp = datetime.datetime.utcnow().isoformat() + "Z"
