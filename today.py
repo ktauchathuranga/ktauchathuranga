@@ -490,31 +490,19 @@ if __name__ == '__main__':
     OWNER_ID = user_info['id']
     age_data, age_time = perf_counter(daily_readme, datetime.datetime(2002, 7, 5))
 
+    # Always fetch fresh counts regardless of mode
+    repo_count, repo_time = perf_counter(graph_repos_stars, 'repos', ['OWNER'])
+    contrib_repo_count, contrib_repo_time = perf_counter(graph_repos_stars, 'repos', ['COLLABORATOR', 'ORGANIZATION_MEMBER'])
+    star_count, star_time = perf_counter(graph_repos_stars, 'stars', ['OWNER'])
+    follower_count, follower_time = perf_counter(follower_getter, USER_NAME)
+
+    # Update caches based on mode
     if mode == "full":
-        # Fetch fresh data
-        repo_count, repo_time = perf_counter(graph_repos_stars, 'repos', ['OWNER'])
-        contrib_repo_count, contrib_repo_time = perf_counter(graph_repos_stars, 'repos', ['COLLABORATOR', 'ORGANIZATION_MEMBER'])
-        star_count, star_time = perf_counter(graph_repos_stars, 'stars', ['OWNER'])
-        follower_count, follower_time = perf_counter(follower_getter, USER_NAME)
-        # Update caches
         owned_loc, owned_loc_time = perf_counter(loc_query, ['OWNER'], 7, True, None, [], "_owner")
         contrib_loc, contrib_loc_time = perf_counter(loc_query, ['COLLABORATOR', 'ORGANIZATION_MEMBER'], 7, True, None, [], "_contrib")
-        # Update metadata
-        meta["repo_count"] = repo_count
-        meta["contrib_repo_count"] = contrib_repo_count
-        meta["star_count"] = star_count
-        meta["follower_count"] = follower_count
     else:  # Incremental mode
-        # Use cached data from metadata
-        repo_count = meta["repo_count"]
-        contrib_repo_count = meta["contrib_repo_count"]
-        star_count = meta["star_count"]
-        follower_count = meta["follower_count"]
-        # Update repository-specific caches only
         owned_loc, owned_loc_time = perf_counter(incremental_cache_update, "_owner", ['OWNER'], last_update, 7, False)
         contrib_loc, contrib_loc_time = perf_counter(incremental_cache_update, "_contrib", ['COLLABORATOR', 'ORGANIZATION_MEMBER'], last_update, 7, False)
-        # Set timing to zero since no API calls were made
-        repo_time = contrib_repo_time = star_time = follower_time = 0
 
     # Calculate commit data from both caches
     owned_commit_data = commit_counter(7, "_owner")
@@ -541,9 +529,14 @@ if __name__ == '__main__':
     svg_overwrite('dark_mode.svg', age_data, total_commit_data_formatted, star_data, repo_data, contrib_data, follower_data, total_loc)
     svg_overwrite('light_mode.svg', age_data, total_commit_data_formatted, star_data, repo_data, contrib_data, follower_data, total_loc)
 
-    # Update metadata with new timestamp
+    # Update metadata
     new_timestamp = datetime.datetime.utcnow().isoformat() + "Z"
-    meta["last_update"] = new_timestamp
+    if mode == "full":
+        meta["last_update"] = new_timestamp  # Only update timestamp in full mode
+    meta["repo_count"] = repo_count
+    meta["contrib_repo_count"] = contrib_repo_count
+    meta["star_count"] = star_count
+    meta["follower_count"] = follower_count
     save_metadata(meta)
 
     # Print performance metrics
