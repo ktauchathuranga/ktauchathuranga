@@ -24,7 +24,7 @@ QUERY_COUNT = {
     'recursive_loc': 0,
     'graph_commits': 0,
     'loc_query': 0,
-    'graph_repos_commits': 0  # Add this
+    # 'graph_repos_commits': 0  # Add this
 }
 
 # ----------------------- Debug Function -----------------------
@@ -147,10 +147,12 @@ def follower_getter(username):
     debug("follower_getter: " + str(count) + " followers found.")
     return count
 
-def graph_repos_stars(count_type, owner_affiliation, cursor=None):
+def graph_repos_stars(count_type, owner_affiliation, cursor=None, repos_with_commits=None):
+    if count_type == 'commit_repos' and repos_with_commits is None:
+        repos_with_commits = set()  # Use a set to track repos with commits
     query_count('graph_repos_stars')
     query = '''
-    query ($owner_affiliation: [RepositoryAffiliation], $login: String!, $cursor: String) {
+    query ($owner_affiliation: [RepositoryAffiliation], $login: String!, $cursor: String, $userId: ID!) {
         user(login: $login) {
             repositories(first: 100, after: $cursor, ownerAffiliations: $owner_affiliation) {
                 totalCount
@@ -162,6 +164,15 @@ def graph_repos_stars(count_type, owner_affiliation, cursor=None):
                                 totalCount
                             }
                             updatedAt
+                            defaultBranchRef {
+                                target {
+                                    ... on Commit {
+                                        history(first: 1, author: {id: $userId}) {
+                                            totalCount
+                                        }
+                                    }
+                                }
+                            }
                         }
                     }
                 }
@@ -172,10 +183,26 @@ def graph_repos_stars(count_type, owner_affiliation, cursor=None):
             }
         }
     }'''
-    variables = {'owner_affiliation': owner_affiliation, 'login': USER_NAME, 'cursor': cursor}
-    debug(f"graph_repos_stars: Fetching with cursor {cursor} for affiliation {owner_affiliation}")
+    variables = {
+        'owner_affiliation': owner_affiliation,
+        'login': USER_NAME,
+        'cursor': cursor,
+        'userId': OWNER_ID  # Use the user's node ID for commit filtering
+    }
+    debug(f"graph_repos_stars: Fetching with cursor {cursor} for affiliation {owner_affiliation}, count_type {count_type}")
     response = simple_request("graph_repos_stars", query, variables)
-    data = response.json()['data']['user']['repositories']
+    json_response = response.json()
+
+    # Check for GraphQL errors
+    if 'errors' in json_response:
+        debug(f"graph_repos_stars: GraphQL errors: {json_response['errors']}")
+        raise Exception(f"GraphQL errors in graph_repos_stars: {json_response['errors']}")
+    if 'data' not in json_response or json_response['data'] is None:
+        debug(f"graph_repos_stars: No data in response: {json_response}")
+        raise Exception(f"No data returned in graph_repos_stars: {json_response}")
+
+    data = json_response['data']['user']['repositories']
+    
     if count_type == 'repos':
         count = data['totalCount']
         debug("graph_repos_stars: Repo count = " + str(count))
@@ -186,6 +213,17 @@ def graph_repos_stars(count_type, owner_affiliation, cursor=None):
             total += edge['node']['stargazers']['totalCount']
         debug("graph_repos_stars: Total stars = " + str(total))
         return total
+    elif count_type == 'commit_repos':
+        for edge in data['edges']:
+            node = edge['node']
+            # Check if the user has at least one commit in the repo
+            if (node['defaultBranchRef'] and 
+                node['defaultBranchRef']['target']['history']['totalCount'] > 0):
+                repos_with_commits.add(node['nameWithOwner'])
+        if data['pageInfo']['hasNextPage']:
+            return graph_repos_stars(count_type, owner_affiliation, data['pageInfo']['endCursor'], repos_with_commits)
+        debug(f"graph_repos_stars: Found {len(repos_with_commits)} repos with commits")
+        return len(repos_with_commits)
 
 def recursive_loc(owner, repo_name, data, cache_comment, cursor=None, addition_total=0, deletion_total=0, my_commits=0):
     debug(f"recursive_loc: Starting for {owner}/{repo_name} with cursor {cursor}")
@@ -547,12 +585,12 @@ if __name__ == '__main__':
 
     print("Calculation times:")
     (user_info, created_at), user_time = perf_counter(user_getter, USER_NAME)
-    OWNER_ID = user_info['id']
+    OWNER_ID = user_info['id']  # Set OWNER_ID for use in graph_repos_stars
     age_data, age_time = perf_counter(daily_readme, datetime.datetime(2002, 7, 5))
 
     # Always fetch fresh counts regardless of mode
     repo_count, repo_time = perf_counter(graph_repos_stars, 'repos', ['OWNER'])
-    contrib_repo_count, contrib_repo_time = perf_counter(count_repos_with_commits, ['COLLABORATOR', 'ORGANIZATION_MEMBER'])
+    contrib_repo_count, contrib_repo_time = perf_counter(graph_repos_stars, 'commit_repos', ['COLLABORATOR', 'ORGANIZATION_MEMBER'])
     star_count, star_time = perf_counter(graph_repos_stars, 'stars', ['OWNER'])
     follower_count, follower_time = perf_counter(follower_getter, USER_NAME)
 
