@@ -422,72 +422,64 @@ def commit_counter(comment_size, cache_suffix=""):
 def svg_overwrite(filename, age_data, commit_data, star_data, repo_data, contrib_data, follower_data, loc_data):
     debug(f"svg_overwrite: Overwriting SVG file {filename}")
     svg = minidom.parse(filename)
+    tspan = svg.getElementsByTagName('tspan')
     
-    # Format each line with consistent spacing and structure
-    age_line = (
-        '<tspan class="keyColor">Age</tspan>: '
-        f'<tspan class="valueColor">{age_data}</tspan>'
-    )
+    # Find the stats line tspan
+    stats_tspan = None
+    for ts in tspan:
+        if ts.getAttribute('x') == '370' and ts.getAttribute('y') == '490':
+            stats_tspan = ts
+            break
     
-    stats_line = (
-        '<tspan class="keyColor">Repos</tspan>: '
-        f'<tspan class="valueColor">{repo_data}</tspan> '
-        '{{<tspan class="keyColor">Contributed</tspan>: '  # Escaped braces
-        f'<tspan class="valueColor">{contrib_data}</tspan>}} | '
-        '<tspan class="keyColor">Commits</tspan>: '
-        f'<tspan class="valueColor">{commit_data}</tspan> | '
-        '<tspan class="keyColor">Stars</tspan>: '
-        f'<tspan class="valueColor">{star_data}</tspan>'
-    )
-    
-    follower_line = (
-        '<tspan class="keyColor">Followers</tspan>: '
-        f'<tspan class="valueColor">{follower_data}</tspan>'
-    )
-    
-    loc_net_line = (
-        '<tspan class="keyColor">Net LOC</tspan>: '
-        f'<tspan class="valueColor">{loc_data[2]}</tspan>'
-    )
-    loc_added_line = (
-        '<tspan class="keyColor">Added</tspan>: '
-        f'<tspan class="valueColor">{loc_data[0]}</tspan>'
-        '<tspan class="valueColor">++</tspan>'
-    )
-    loc_deleted_line = (
-        '<tspan class="keyColor">Deleted</tspan>: '
-        f'<tspan class="valueColor">{loc_data[1]}</tspan>'
-        '<tspan class="valueColor">--</tspan>'
-    )
+    if stats_tspan:
+        # Clear existing content
+        while stats_tspan.firstChild:
+            stats_tspan.removeChild(stats_tspan.firstChild)
+        
+        # Build the stats line with consistent spacing
+        stats_tspan.appendChild(create_tspan(svg, "Repos", "keyColor"))
+        stats_tspan.appendChild(create_tspan(svg, ": ", "keyColor"))
+        stats_tspan.appendChild(create_tspan(svg, str(repo_data), "valueColor"))
+        stats_tspan.appendChild(create_tspan(svg, " ", None))
+        
+        stats_tspan.appendChild(create_tspan(svg, "{", "keyColor"))
+        stats_tspan.appendChild(create_tspan(svg, "Contributed", "keyColor"))
+        stats_tspan.appendChild(create_tspan(svg, ": ", "keyColor"))
+        stats_tspan.appendChild(create_tspan(svg, str(contrib_data), "valueColor"))
+        stats_tspan.appendChild(create_tspan(svg, "}", "keyColor"))
+        stats_tspan.appendChild(create_tspan(svg, " | ", "keyColor"))
+        
+        stats_tspan.appendChild(create_tspan(svg, "Commits", "keyColor"))  # Fixed typo from "Commmits"
+        stats_tspan.appendChild(create_tspan(svg, ": ", "keyColor"))
+        stats_tspan.appendChild(create_tspan(svg, str(commit_data), "valueColor"))
+        stats_tspan.appendChild(create_tspan(svg, " | ", "keyColor"))
+        
+        stats_tspan.appendChild(create_tspan(svg, "Stars", "keyColor"))
+        stats_tspan.appendChild(create_tspan(svg, ": ", "keyColor"))
+        stats_tspan.appendChild(create_tspan(svg, str(star_data), "valueColor"))
+
+    # Keep all original tspan updates exactly as they were
+    tspan[30].firstChild.data = age_data
+    tspan[65].firstChild.data = repo_data
+    tspan[67].firstChild.data = contrib_data
+    tspan[69].firstChild.data = commit_data
+    tspan[71].firstChild.data = star_data
+    tspan[73].firstChild.data = follower_data
+    tspan[75].firstChild.data = loc_data[2]
+    tspan[76].firstChild.data = loc_data[0] + '++'
+    tspan[77].firstChild.data = loc_data[1] + '--'
 
     with open(filename, mode='w', encoding='utf-8') as f:
-        tspan = svg.getElementsByTagName('tspan')
-        
-        # Dictionary mapping tspan coordinates to new content
-        updates = {
-            ('370', '450'): age_line,          # Age
-            ('370', '490'): stats_line,        # Repos, Contributed, Commits, Stars
-            ('370', '530'): follower_line,     # Followers
-            ('370', '570'): loc_net_line,      # Net LOC
-            ('370', '610'): loc_added_line,    # LOC Added
-            ('370', '650'): loc_deleted_line   # LOC Deleted
-        }
-        
-        # Update all matching tspan elements
-        for ts in tspan:
-            x = ts.getAttribute('x')
-            y = ts.getAttribute('y')
-            if (x, y) in updates:
-                # Remove existing child nodes
-                while ts.firstChild:
-                    ts.removeChild(ts.firstChild)
-                # Parse and append new content
-                new_nodes = minidom.parseString(f'<tspan>{updates[(x, y)]}</tspan>').firstChild.childNodes
-                for node in new_nodes:
-                    ts.appendChild(node.cloneNode(True))
-        
         f.write(svg.toxml('utf-8').decode('utf-8'))
     debug(f"svg_overwrite: Finished updating {filename}")
+
+def create_tspan(svg_doc, text, class_name=None):
+    """Helper function to create a tspan element with optional class"""
+    tspan = svg_doc.createElement('tspan')
+    tspan.appendChild(svg_doc.createTextNode(text))
+    if class_name:
+        tspan.setAttribute('class', class_name)
+    return tspan
 
 def get_repos_updated_since(last_update, owner_affiliation):
     query = '''
