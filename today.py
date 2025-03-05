@@ -423,7 +423,7 @@ def svg_overwrite(filename, age_data, commit_data, star_data, repo_data, contrib
     debug(f"svg_overwrite: Overwriting SVG file {filename}")
     svg = minidom.parse(filename)
     
-    # Format each line with consistent spacing and structure
+    # Format each line with consistent spacing and structure, escaping curly braces
     age_line = (
         '<tspan class="keyColor">Age</tspan>: '
         f'<tspan class="valueColor">{age_data}</tspan>'
@@ -432,8 +432,8 @@ def svg_overwrite(filename, age_data, commit_data, star_data, repo_data, contrib
     stats_line = (
         '<tspan class="keyColor">Repos</tspan>: '
         f'<tspan class="valueColor">{repo_data}</tspan> '
-        '{<tspan class="keyColor">Contributed</tspan>: '
-        f'<tspan class="valueColor">{contrib_data}</tspan>} | '
+        '{{<tspan class="keyColor">Contributed</tspan>: '  # Escaped { with {{
+        f'<tspan class="valueColor">{contrib_data}</tspan>}} | '  # Escaped } with }}
         '<tspan class="keyColor">Commits</tspan>: '
         f'<tspan class="valueColor">{commit_data}</tspan> | '
         '<tspan class="keyColor">Stars</tspan>: '
@@ -465,7 +465,6 @@ def svg_overwrite(filename, age_data, commit_data, star_data, repo_data, contrib
         
         # Dictionary mapping tspan coordinates to new content
         updates = {
-            # Assuming these are the correct coordinates - adjust as needed
             ('370', '450'): age_line,          # Age
             ('370', '490'): stats_line,        # Repos, Contributed, Commits, Stars
             ('370', '530'): follower_line,     # Followers
