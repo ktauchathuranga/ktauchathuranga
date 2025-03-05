@@ -422,64 +422,19 @@ def commit_counter(comment_size, cache_suffix=""):
 def svg_overwrite(filename, age_data, commit_data, star_data, repo_data, contrib_data, follower_data, loc_data):
     debug(f"svg_overwrite: Overwriting SVG file {filename}")
     svg = minidom.parse(filename)
-    tspan = svg.getElementsByTagName('tspan')
-    
-    # Find the stats line tspan
-    stats_tspan = None
-    for ts in tspan:
-        if ts.getAttribute('x') == '370' and ts.getAttribute('y') == '490':
-            stats_tspan = ts
-            break
-    
-    if stats_tspan:
-        # Clear existing content
-        while stats_tspan.firstChild:
-            stats_tspan.removeChild(stats_tspan.firstChild)
-        
-        # Build the stats line with consistent spacing
-        stats_tspan.appendChild(create_tspan(svg, "Repos", "keyColor"))
-        stats_tspan.appendChild(create_tspan(svg, ": ", "keyColor"))
-        stats_tspan.appendChild(create_tspan(svg, str(repo_data), "valueColor"))
-        stats_tspan.appendChild(create_tspan(svg, " ", None))
-        
-        stats_tspan.appendChild(create_tspan(svg, "{", "keyColor"))
-        stats_tspan.appendChild(create_tspan(svg, "Contributed", "keyColor"))
-        stats_tspan.appendChild(create_tspan(svg, ": ", "keyColor"))
-        stats_tspan.appendChild(create_tspan(svg, str(contrib_data), "valueColor"))
-        stats_tspan.appendChild(create_tspan(svg, "}", "keyColor"))
-        stats_tspan.appendChild(create_tspan(svg, " | ", "keyColor"))
-        
-        stats_tspan.appendChild(create_tspan(svg, "Commits", "keyColor"))  # Fixed typo from "Commmits"
-        stats_tspan.appendChild(create_tspan(svg, ": ", "keyColor"))
-        stats_tspan.appendChild(create_tspan(svg, str(commit_data), "valueColor"))
-        stats_tspan.appendChild(create_tspan(svg, " | ", "keyColor"))
-        
-        stats_tspan.appendChild(create_tspan(svg, "Stars", "keyColor"))
-        stats_tspan.appendChild(create_tspan(svg, ": ", "keyColor"))
-        stats_tspan.appendChild(create_tspan(svg, str(star_data), "valueColor"))
-
-    # Keep all original tspan updates exactly as they were
-    tspan[30].firstChild.data = age_data
-    tspan[65].firstChild.data = repo_data
-    tspan[67].firstChild.data = contrib_data
-    tspan[69].firstChild.data = commit_data
-    tspan[71].firstChild.data = star_data
-    tspan[73].firstChild.data = follower_data
-    tspan[75].firstChild.data = loc_data[2]
-    tspan[76].firstChild.data = loc_data[0] + '++'
-    tspan[77].firstChild.data = loc_data[1] + '--'
-
     with open(filename, mode='w', encoding='utf-8') as f:
+        tspan = svg.getElementsByTagName('tspan')
+        tspan[30].firstChild.data = age_data
+        tspan[65].firstChild.data = repo_data
+        tspan[67].firstChild.data = contrib_data
+        tspan[69].firstChild.data = commit_data
+        tspan[71].firstChild.data = star_data
+        tspan[73].firstChild.data = follower_data
+        tspan[75].firstChild.data = loc_data[2]
+        tspan[76].firstChild.data = loc_data[0] + '++'
+        tspan[77].firstChild.data = loc_data[1] + '--'
         f.write(svg.toxml('utf-8').decode('utf-8'))
     debug(f"svg_overwrite: Finished updating {filename}")
-
-def create_tspan(svg_doc, text, class_name=None):
-    """Helper function to create a tspan element with optional class"""
-    tspan = svg_doc.createElement('tspan')
-    tspan.appendChild(svg_doc.createTextNode(text))
-    if class_name:
-        tspan.setAttribute('class', class_name)
-    return tspan
 
 def get_repos_updated_since(last_update, owner_affiliation):
     query = '''
