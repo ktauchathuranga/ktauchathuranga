@@ -35,11 +35,9 @@ jobs:
         run: python today.py --incremental-update
       - name: Commit
         run: |-
-          git reset --hard HEAD  # This will discard all local changes
-          git pull origin main    # Fetch latest changes from the main branch
           git add .
-          git diff
           git config --global user.email "github-actions-bot@ktauchathuranga.github.io"
           git config --global user.name "ktauchathuranga/GitHub-Actions-Bot"
           git commit -m "Updated README" -a || echo "No changes to commit"
-          git push origin main --force  # Force push to overwrite the current changes on the remote
+          git pull --rebase # Pull the changes from the remote repository with rebase to avoid merge conflicts
+          git push
