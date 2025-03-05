@@ -4,7 +4,7 @@ on:
     branches:
       - main
   schedule:
-    - cron: "0 4 * * *"
+    - cron: "0 4 * * *" # Runs daily at 04:00 UTC
   workflow_dispatch: # Allows manual triggering via API
 permissions:
   contents: write
@@ -28,11 +28,21 @@ jobs:
           restore-keys: ${{ runner.os }}-pip-
       - name: Install dependencies
         run: python -m pip install -r cache/requirements.txt
+      - name: Determine update mode
+        id: update_mode
+        run: |
+          if [ "$(date +%d)" -eq "01" ]; then
+            echo "Running full cache update"
+            echo "MODE=full-cache" >> $GITHUB_ENV
+          else
+            echo "Running incremental update"
+            echo "MODE=incremental-update" >> $GITHUB_ENV
+          fi
       - name: Update README file
         env:
           ACCESS_TOKEN: ${{ secrets.ACCESS_TOKEN }}
           USER_NAME: ${{ secrets.USER_NAME }}
-        run: python today.py --incremental-update
+        run: python today.py --${{ env.MODE }}
       - name: Commit
         run: |-
           git add .
