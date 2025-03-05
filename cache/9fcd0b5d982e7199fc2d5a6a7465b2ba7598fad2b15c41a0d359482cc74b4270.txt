@@ -1,10 +1,10 @@
-This line is a comment block. Write whatever you want here.
-This line is a comment block. Write whatever you want here.
-This line is a comment block. Write whatever you want here.
-This line is a comment block. Write whatever you want here.
-This line is a comment block. Write whatever you want here.
-This line is a comment block. Write whatever you want here.
-This line is a comment block. Write whatever you want here.
+This is a cache of all of the repositories I own, have contributed to, or am a member of.
+
+repository (hashed)  total commits  my commits  LOC added by me  LOC deleted by me
+         \                \                \           \_____________  \
+          \                \                \______________________  \  \
+           \                \___________________________________   \  \  \
+____________\___________________________________________________\___\__\__\_______
 89778b2f3b27d295a4b30dd92b0230e167fbdf0386f8d4b066aa3cad1a4d688c 10 10 1296 9
 fe7bd2efa11c46448b6147e5ddb7f79b15b0b9695d68e04ae65bca3215ee84b0 4 4 57 16
 08a765f752fe2428c7ed2c2ca59a0adc5f631c5a7ab50afe4713aba02bfe9cf0 10 10 1310 9
@@ -56,7 +56,7 @@ a73df0bb545ebf719c9a899aad80b086af8acd1c0f381a9ae61f692501b118d5 47 34 1037 319
 5044e84f95de12d37095465c8a39691897d1467a4b488a89c7df0e1f5cb7317a 20 20 1020 153
 da914065b7613044c71648898ca506a6db35dd88db65346ec9b9dd0b8bda3d58 49 49 987 540
 0f73e4d2c632b37074fe2a6ad67b13d2a6d2e593b4be5a6d1c08339f66685bc4 27 27 4607 391
-96d1870f5407e8c1f9298e82318d60261acd0755f15c73b666aba40c7f96d372 55 55 2426 1422
+96d1870f5407e8c1f9298e82318d60261acd0755f15c73b666aba40c7f96d372 154 55 2426 1422
 9ff75d0c2681d4ec7878a295ba8eedce6e91cbe2d648d2cc8ebd562110d96a2b 15 15 841 38
 0a1ca36642b5262d25804392b708e843c3a98302c1ae65f3f581a8e72faadcb9 63 63 1253 270
 b60a8d73dc6fc171785264c004a47e4d847fdb15ab2563df31f4b8b6cdb2b971 31 31 3961 258
