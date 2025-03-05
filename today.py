@@ -422,19 +422,42 @@ def commit_counter(comment_size, cache_suffix=""):
 def svg_overwrite(filename, age_data, commit_data, star_data, repo_data, contrib_data, follower_data, loc_data):
     debug(f"svg_overwrite: Overwriting SVG file {filename}")
     svg = minidom.parse(filename)
+    
     with open(filename, mode='w', encoding='utf-8') as f:
         tspan = svg.getElementsByTagName('tspan')
-        tspan[30].firstChild.data = age_data
-        tspan[65].firstChild.data = repo_data
-        tspan[67].firstChild.data = contrib_data
-        tspan[69].firstChild.data = commit_data
-        tspan[71].firstChild.data = star_data
-        tspan[73].firstChild.data = follower_data
-        tspan[75].firstChild.data = loc_data[2]
-        tspan[76].firstChild.data = loc_data[0] + '++'
-        tspan[77].firstChild.data = loc_data[1] + '--'
-        f.write(svg.toxml('utf-8').decode('utf-8'))
+
+        def safe_update(index, data):
+            if len(tspan) > index:
+                # Ensure data is a string and remove any leading/trailing spaces only if it's being replaced
+                data = str(data).strip() if data is not None else ''
+                if tspan[index].firstChild:
+                    tspan[index].firstChild.data = data  # Replace existing text
+                else:
+                    tspan[index].appendChild(svg.createTextNode(data))  # Add new text node if empty
+
+        # Update all relevant <tspan> elements
+        safe_update(30, age_data)
+        safe_update(65, repo_data)
+        safe_update(67, contrib_data)
+        safe_update(69, commit_data)
+        safe_update(71, star_data)
+        safe_update(73, follower_data)
+        safe_update(75, loc_data[2])
+        safe_update(76, loc_data[0] + '++')
+        safe_update(77, loc_data[1] + '--')
+
+        # Now only remove the spaces from the specific updated content
+        xml_string = svg.toxml('utf-8').decode('utf-8')
+
+        # Only remove unwanted spaces between tags in the areas that were updated
+        for index in [30, 65, 67, 69, 71, 73, 75, 76, 77]:
+            tspan_text = str(tspan[index].firstChild.data).strip()
+            xml_string = xml_string.replace(f'<tspan class="valueColor">{tspan[index].firstChild.data}</tspan>', f'<tspan class="valueColor">{tspan_text}</tspan>')
+
+        f.write(xml_string)
+    
     debug(f"svg_overwrite: Finished updating {filename}")
+
 
 def get_repos_updated_since(last_update, owner_affiliation):
     query = '''
@@ -649,3 +672,12 @@ if __name__ == '__main__':
     print('Total GitHub GraphQL API calls:', '{:>3}'.format(sum(QUERY_COUNT.values())))
     for funct_name, count in QUERY_COUNT.items():
         print('{:<28}'.format('   ' + funct_name + ':'), '{:>6}'.format(count))
+
+    # New print statements for the requested variables
+    print("\nage_data:", age_data)
+    print("total_commit_data_formatted:", total_commit_data_formatted)
+    print("star_data:", star_data)
+    print("repo_data:", repo_data)
+    print("contrib_data:", contrib_data)
+    print("follower_data:", follower_data)
+    print("total_loc:", total_loc)
