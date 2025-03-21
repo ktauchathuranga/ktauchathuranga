@@ -1,6 +1,6 @@
 import datetime
 import json
-from dateutil import relativedelta
+from dateutil import relativedelta, parser
 import requests
 import os
 from xml.dom import minidom
@@ -27,149 +27,13 @@ QUERY_COUNT = {
     'pr_contributed_repos': 0  # Add this for PR query
 }
 
+# ... [Keep other helper functions and imports unchanged] ...
+
 # ----------------------- Debug Function -----------------------
 
 def debug(msg):
     if DEBUG:
         print("[DEBUG]", msg)
-
-# ----------------------- Helper Functions -----------------------
-
-def count_all_contributed_repos(username, user_id, start_date=None, end_date=None):
-    # Initialize a set to track unique repositories with contributions
-    repos_with_contributions = set()
-
-    # Part 1: Repos where user is a collaborator/org member with commits
-    query_count('graph_repos_stars')
-    collab_query = '''
-    query ($owner_affiliation: [RepositoryAffiliation], $login: String!, $cursor: String, $userId: ID!) {
-        user(login: $login) {
-            repositories(first: 100, after: $cursor, ownerAffiliations: $owner_affiliation) {
-                edges {
-                    node {
-                        nameWithOwner
-                        defaultBranchRef {
-                            target {
-                                ... on Commit {
-                                    history(first: 1, author: {id: $userId}) {
-                                        totalCount
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-                pageInfo {
-                    endCursor
-                    hasNextPage
-                }
-            }
-        }
-    }'''
-    variables = {
-        'owner_affiliation': ['COLLABORATOR', 'ORGANIZATION_MEMBER'],
-        'login': username,
-        'cursor': None,
-        'userId': user_id
-    }
-    debug("count_all_contributed_repos: Fetching collaborator/org member repos with commits")
-    while True:
-        response = simple_request("count_all_contributed_repos_collab", collab_query, variables)
-        json_response = response.json()
-        if 'errors' in json_response:
-            debug(f"GraphQL errors in collab query: {json_response['errors']}")
-            raise Exception(f"GraphQL errors: {json_response['errors']}")
-        data = json_response['data']['user']['repositories']
-        for edge in data['edges']:
-            node = edge['node']
-            if (node['defaultBranchRef'] and 
-                node['defaultBranchRef']['target']['history']['totalCount'] > 0):
-                repos_with_contributions.add(node['nameWithOwner'])
-        if not data['pageInfo']['hasNextPage']:
-            break
-        variables['cursor'] = data['pageInfo']['endCursor']
-
-    # Part 2: Repos from PR contributions (including deleted forks)
-    query_count('pr_contributed_repos')
-    pr_query = '''
-    query($login: String!, $startDate: DateTime, $endDate: DateTime) {
-        user(login: $login) {
-            contributionsCollection(from: $startDate, to: $endDate) {
-                commitContributionsByRepository {
-                    repository {
-                        nameWithOwner
-                    }
-                    contributions {
-                        totalCount
-                    }
-                }
-            }
-        }
-    }'''
-    variables = {
-        'login': username,
-        'startDate': start_date,
-        'endDate': end_date
-    }
-    debug("count_all_contributed_repos: Fetching PR-contributed repos")
-    response = simple_request("count_all_contributed_repos_pr", pr_query, variables)
-    json_response = response.json()
-    if 'errors' in json_response:
-        debug(f"GraphQL errors in PR query: {json_response['errors']}")
-        raise Exception(f"GraphQL errors: {json_response['errors']}")
-    contribs = json_response['data']['user']['contributionsCollection']['commitContributionsByRepository']
-    for contrib in contribs:
-        repo_name = contrib['repository']['nameWithOwner']
-        total_count = contrib['contributions']['totalCount']
-        if total_count > 0:
-            debug(f"PR contrib to {repo_name}: {total_count} commits")
-            repos_with_contributions.add(repo_name)
-
-    # Part 3: Fetch owned repos to exclude them
-    query_count('graph_repos_stars')
-    owned_query = '''
-    query ($login: String!, $cursor: String) {
-        user(login: $login) {
-            repositories(first: 100, after: $cursor, ownerAffiliations: [OWNER]) {
-                edges {
-                    node {
-                        nameWithOwner
-                    }
-                }
-                pageInfo {
-                    endCursor
-                    hasNextPage
-                }
-            }
-        }
-    }'''
-    variables = {
-        'login': username,
-        'cursor': None
-    }
-    owned_repos = set()
-    debug("count_all_contributed_repos: Fetching owned repos to exclude")
-    while True:
-        response = simple_request("count_all_contributed_repos_owned", owned_query, variables)
-        json_response = response.json()
-        if 'errors' in json_response:
-            debug(f"GraphQL errors in owned query: {json_response['errors']}")
-            raise Exception(f"GraphQL errors: {json_response['errors']}")
-        data = json_response['data']['user']['repositories']
-        for edge in data['edges']:
-            owned_repos.add(edge['node']['nameWithOwner'])
-        if not data['pageInfo']['hasNextPage']:
-            break
-        variables['cursor'] = data['pageInfo']['endCursor']
-
-    # Exclude owned repos from contributions
-    contrib_only_repos = repos_with_contributions - owned_repos
-
-    # Log and return both count and repo names
-    debug(f"count_all_contributed_repos: Found {len(contrib_only_repos)} unique non-owned repos with contributions: {contrib_only_repos}")
-    if len(contrib_only_repos) >= 100:
-        debug("WARNING: contrib_only_repos may be incomplete due to GitHub API limit on commitContributionsByRepository (typically 100 repos)")
-    return len(contrib_only_repos), contrib_only_repos
 
 def format_plural(unit):
     return '' if unit == 1 else 's'
@@ -238,6 +102,158 @@ def force_close_file(data, cache_comment, filename):
         f.writelines(cache_comment)
         f.writelines(data)
     debug(f"force_close_file: Partial data saved to {filename}")
+
+def count_all_contributed_repos(username, user_id, start_date=None, end_date=None):
+    repos_with_contributions = set()
+
+    # Part 1: Repos where user is a collaborator or org member with commits
+    query_count('graph_repos_stars')
+    collab_query = '''
+    query ($owner_affiliation: [RepositoryAffiliation], $login: String!, $cursor: String, $userId: ID!) {
+        user(login: $login) {
+            repositories(first: 100, after: $cursor, ownerAffiliations: $owner_affiliation) {
+                edges {
+                    node {
+                        nameWithOwner
+                        defaultBranchRef {
+                            target {
+                                ... on Commit {
+                                    history(first: 1, author: {id: $userId}) {
+                                        totalCount
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+                pageInfo {
+                    endCursor
+                    hasNextPage
+                }
+            }
+        }
+    }'''
+    variables = {
+        'owner_affiliation': ['COLLABORATOR', 'ORGANIZATION_MEMBER'],
+        'login': username,
+        'cursor': None,
+        'userId': user_id
+    }
+    debug("count_all_contributed_repos: Fetching collaborator/org member repos with commits")
+    while True:
+        response = simple_request("count_all_contributed_repos_collab", collab_query, variables)
+        json_response = response.json()
+        if 'errors' in json_response:
+            debug(f"GraphQL errors in collab query: {json_response['errors']}")
+            raise Exception(f"GraphQL errors: {json_response['errors']}")
+        data = json_response['data']['user']['repositories']
+        for edge in data['edges']:
+            node = edge['node']
+            if (node['defaultBranchRef'] and 
+                node['defaultBranchRef']['target']['history']['totalCount'] > 0):
+                repos_with_contributions.add(node['nameWithOwner'])
+        if not data['pageInfo']['hasNextPage']:
+            break
+        variables['cursor'] = data['pageInfo']['endCursor']
+
+    # Part 2: PR and commit contributions (including org repos)
+    query_count('pr_contributed_repos')
+    pr_query = '''
+    query($login: String!, $startDate: DateTime, $endDate: DateTime) {
+        user(login: $login) {
+            contributionsCollection(from: $startDate, to: $endDate) {
+                commitContributionsByRepository(maxRepositories: 100) {
+                    repository {
+                        nameWithOwner
+                        owner {
+                            login
+                        }
+                    }
+                    contributions {
+                        totalCount
+                    }
+                }
+            }
+        }
+    }'''
+    # Parse start_date and end_date into datetime objects
+    start_date_dt = parser.isoparse(start_date) if start_date else None
+    end_date_dt = parser.isoparse(end_date) if end_date else datetime.datetime.utcnow()
+
+    if start_date_dt and end_date_dt:
+        current_start = start_date_dt
+        delta = relativedelta.relativedelta(years=1)
+        while current_start < end_date_dt:
+            current_end = min(current_start + delta, end_date_dt)
+            current_start_iso = current_start.isoformat()
+            current_end_iso = current_end.isoformat()
+            if '+' not in current_start_iso and not current_start_iso.endswith('Z'):
+                current_start_iso += 'Z'
+            if '+' not in current_end_iso and not current_end_iso.endswith('Z'):
+                current_end_iso += 'Z'
+            variables = {
+                'login': username,
+                'startDate': current_start_iso,
+                'endDate': current_end_iso
+            }
+            debug(f"count_all_contributed_repos: Fetching commit contributions from {current_start_iso} to {current_end_iso}")
+            response = simple_request("count_all_contributed_repos_pr", pr_query, variables)
+            json_response = response.json()
+            if 'errors' in json_response:
+                debug(f"GraphQL errors in PR query: {json_response['errors']}")
+                raise Exception(f"GraphQL errors: {json_response['errors']}")
+            contribs = json_response['data']['user']['contributionsCollection']['commitContributionsByRepository']
+            for contrib in contribs:
+                repo_name = contrib['repository']['nameWithOwner']
+                total_count = contrib['contributions']['totalCount']
+                if total_count > 0:
+                    debug(f"Commit contrib to {repo_name}: {total_count} commits")
+                    repos_with_contributions.add(repo_name)
+            if len(contribs) >= 100:
+                debug(f"WARNING: Interval {current_start_iso} to {current_end_iso} hit 100 repo limit. Some may be missing.")
+            current_start = current_end
+
+    # Part 3: Fetch owned repos to exclude them
+    owned_repos = set()
+    owned_query = '''
+    query ($login: String!, $cursor: String) {
+        user(login: $login) {
+            repositories(first: 100, after: $cursor, ownerAffiliations: [OWNER]) {
+                edges {
+                    node {
+                        nameWithOwner
+                    }
+                }
+                pageInfo {
+                    endCursor
+                    hasNextPage
+                }
+            }
+        }
+    }'''
+    variables = {'login': username, 'cursor': None}
+    debug("count_all_contributed_repos: Fetching owned repos to exclude")
+    while True:
+        response = simple_request("count_all_contributed_repos_owned", owned_query, variables)
+        json_response = response.json()
+        if 'errors' in json_response:
+            debug(f"GraphQL errors in owned query: {json_response['errors']}")
+            raise Exception(f"GraphQL errors: {json_response['errors']}")
+        data = json_response['data']['user']['repositories']
+        for edge in data['edges']:
+            owned_repos.add(edge['node']['nameWithOwner'])
+        if not data['pageInfo']['hasNextPage']:
+            break
+        variables['cursor'] = data['pageInfo']['endCursor']
+
+    # Exclude owned repos
+    contrib_only_repos = repos_with_contributions - owned_repos
+
+    # Warn if we might be hitting the limit
+    debug(f"count_all_contributed_repos: Found {len(contrib_only_repos)} unique non-owned repos with contributions: {contrib_only_repos}")
+    if len(contribs) >= 100:
+        debug("WARNING: commitContributionsByRepository returned 100 repos, which is the max limit. Some contributions may be missing.")
+    return len(contrib_only_repos), contrib_only_repos
 
 # ----------------------- Core Functions -----------------------
 
@@ -722,10 +738,8 @@ def count_repos_with_commits(owner_affiliation, cursor=None, repos_with_commits=
         return count_repos_with_commits(owner_affiliation, data['pageInfo']['endCursor'], repos_with_commits)
     debug(f"count_repos_with_commits: Found {len(repos_with_commits)} repos with commits")
     return len(repos_with_commits)
-# ----------------------- Main Execution -----------------------
 
 if __name__ == '__main__':
-    # Parse command-line arguments
     mode = None
     if len(sys.argv) > 1:
         if sys.argv[1] == "--full-cache":
@@ -738,54 +752,47 @@ if __name__ == '__main__':
         print("Usage: python today.py --full-cache | --incremental-update")
         sys.exit(1)
 
-    # Load metadata
     meta = load_metadata()
     last_update = meta["last_update"]
 
     print("Calculation times:")
     (user_info, created_at), user_time = perf_counter(user_getter, USER_NAME)
-    OWNER_ID = user_info['id']  # Set OWNER_ID for use in graph_repos_stars
+    OWNER_ID = user_info['id']
     age_data, age_time = perf_counter(daily_readme, datetime.datetime(2002, 9, 19))
 
-    # Always fetch fresh counts
+    # Get start_date and end_date for contributionsCollection
+    start_date = created_at
+    end_date = datetime.datetime.utcnow().isoformat() + 'Z'
+
+    # Fetch counts
     repo_count, repo_time = perf_counter(graph_repos_stars, 'repos', ['OWNER'])
-    
-    contrib_repo_count, contrib_repo_time = perf_counter(count_all_contributed_repos, USER_NAME, OWNER_ID)
-    contrib_repo_count, contrib_repos = contrib_repo_count  # Unpack the tuple
-    
+    contrib_result, contrib_repo_time = perf_counter(count_all_contributed_repos, USER_NAME, OWNER_ID, start_date, end_date)
+    contrib_repo_count, contrib_repos = contrib_result
     star_count, star_time = perf_counter(graph_repos_stars, 'stars', ['OWNER'])
     follower_count, follower_time = perf_counter(follower_getter, USER_NAME)
 
-    # Update caches based on mode
+    # ... [Remainder of the main execution unchanged] ...
+
+    # Update cache for all repos (owned + contributed)
+    all_affiliations = ['OWNER', 'COLLABORATOR', 'ORGANIZATION_MEMBER']
     if mode == "full":
-        owned_loc, owned_loc_time = perf_counter(loc_query, ['OWNER'], 7, True, None, [], "_owner")
-        contrib_loc, contrib_loc_time = perf_counter(loc_query, ['COLLABORATOR', 'ORGANIZATION_MEMBER'], 7, True, None, [], "_contrib")
-    else:  # Incremental mode
-        owned_loc, owned_loc_time = perf_counter(incremental_cache_update, "_owner", ['OWNER'], last_update, 7, False)
-        contrib_loc, contrib_loc_time = perf_counter(incremental_cache_update, "_contrib", ['COLLABORATOR', 'ORGANIZATION_MEMBER'], last_update, 7, False)
+        total_loc, total_loc_time = perf_counter(loc_query, all_affiliations, 7, True, None, [], "_all")
+    else:
+        total_loc, total_loc_time = perf_counter(incremental_cache_update, "_all", all_affiliations, last_update, 7, False)
 
-    # Calculate commit data from both caches
-    owned_commit_data = commit_counter(7, "_owner")
-    contrib_commit_data = commit_counter(7, "_contrib")
-    total_commit_data = owned_commit_data + contrib_commit_data  # Sum commits from both
+    # Calculate total commits from the single cache
+    total_commit_data = commit_counter(7, "_all")
 
-    # Combine LOC data from both caches
-    total_loc = [
-        owned_loc[0] + contrib_loc[0],  # Total lines added
-        owned_loc[1] + contrib_loc[1],  # Total lines deleted
-        owned_loc[2] + contrib_loc[2]   # Net lines (added - deleted)
-    ]
-
-    # Format data for SVG
+    # Format data
     repo_data = formatter('my repositories', repo_time, repo_count, 2)
     contrib_data = formatter('contributed repos', contrib_repo_time, contrib_repo_count, 2)
     star_data = formatter('star counter', star_time, star_count)
     follower_data = formatter('follower counter', follower_time, follower_count)
-    total_commit_data_formatted = formatter('total commits', owned_loc_time + contrib_loc_time, total_commit_data, 7)
+    total_commit_data_formatted = formatter('total commits', total_loc_time, total_commit_data, 7)
     for index in range(len(total_loc)):
-        total_loc[index] = '{:,}'.format(total_loc[index])  # Format all elements
+        total_loc[index] = '{:,}'.format(total_loc[index])
 
-    # Overwrite SVG files using combined data
+    # Overwrite SVG files
     svg_overwrite('dark_mode.svg', age_data, total_commit_data_formatted, star_data, repo_data, contrib_data, follower_data, total_loc)
     svg_overwrite('light_mode.svg', age_data, total_commit_data_formatted, star_data, repo_data, contrib_data, follower_data, total_loc)
 
@@ -798,14 +805,13 @@ if __name__ == '__main__':
     meta["follower_count"] = follower_count
     save_metadata(meta)
 
-    # Print performance metrics
-    total_func_time = user_time + age_time + owned_loc_time + contrib_loc_time + star_time + follower_time + contrib_repo_time
+    # Print metrics
+    total_func_time = user_time + age_time + total_loc_time + star_time + follower_time + contrib_repo_time
     print('\033[F' * 8, '{:<21}'.format('Total function time:'), '{:>11}'.format('%.4f' % total_func_time), ' s')
     print('Total GitHub GraphQL API calls:', '{:>3}'.format(sum(QUERY_COUNT.values())))
     for funct_name, count in QUERY_COUNT.items():
         print('{:<28}'.format('   ' + funct_name + ':'), '{:>6}'.format(count))
 
-    # Existing variable prints
     print("\nage_data:", age_data)
     print("total_commit_data_formatted:", total_commit_data_formatted)
     print("star_data:", star_data)
@@ -813,8 +819,6 @@ if __name__ == '__main__':
     print("contrib_data:", contrib_data)
     print("follower_data:", follower_data)
     print("total_loc:", total_loc)
-
-    # New: Print contributed repo names
     print("\nContributed repositories:")
-    for repo in sorted(contrib_repos):  # Sort for consistent output
+    for repo in sorted(contrib_repos):
         print(f"  - {repo}")
