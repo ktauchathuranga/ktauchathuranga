@@ -213,9 +213,10 @@ def count_all_contributed_repos(username, user_id, start_date=None, end_date=Non
                 debug(f"WARNING: Interval {current_start_iso} to {current_end_iso} hit 100 repo limit. Some may be missing.")
             current_start = current_end
 
-    # Part 3: Fetch owned repos to exclude them
     owned_repos = set()
-    owned_query = '''
+
+    # Query for personal repositories
+    owned_query_personal = '''
     query ($login: String!, $cursor: String) {
         user(login: $login) {
             repositories(first: 100, after: $cursor, ownerAffiliations: [OWNER]) {
@@ -232,27 +233,54 @@ def count_all_contributed_repos(username, user_id, start_date=None, end_date=Non
         }
     }'''
     variables = {'login': username, 'cursor': None}
-    debug("count_all_contributed_repos: Fetching owned repos to exclude")
+    debug("Fetching personal owned repos")
     while True:
-        response = simple_request("count_all_contributed_repos_owned", owned_query, variables)
+        response = simple_request("count_all_contributed_repos_owned_personal", owned_query_personal, variables)
         json_response = response.json()
         if 'errors' in json_response:
-            debug(f"GraphQL errors in owned query: {json_response['errors']}")
+            debug(f"GraphQL errors in personal owned query: {json_response['errors']}")
             raise Exception(f"GraphQL errors: {json_response['errors']}")
         data = json_response['data']['user']['repositories']
         for edge in data['edges']:
             owned_repos.add(edge['node']['nameWithOwner'])
         if not data['pageInfo']['hasNextPage']:
             break
-        variables['cursor'] = data['pageInfo']['endCursor']
+        variables['cursor'] = data['pageInfo']['endCursor']  # Update cursor for pagination
 
-    # Exclude owned repos
+    # Query for organization repositories where user is owner
+    owned_query_org = '''
+    query ($login: String!) {
+        user(login: $login) {
+            organizations(first: 100) {
+                edges {
+                    node {
+                        repositories(first: 100, affiliations: [OWNER]) {
+                            edges {
+                                node {
+                                    nameWithOwner
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }'''
+    debug("Fetching org repos where user is owner")
+    response = simple_request("count_all_contributed_repos_owned_org", owned_query_org, {'login': username})
+    json_response = response.json()
+    if 'errors' in json_response:
+        debug(f"GraphQL errors: {json_response['errors']}")
+        raise Exception(f"GraphQL errors: {json_response['errors']}")
+    orgs = json_response['data']['user']['organizations']['edges']
+    for org_edge in orgs:
+        repos = org_edge['node']['repositories']['edges']
+        for repo_edge in repos:
+            owned_repos.add(repo_edge['node']['nameWithOwner'])
+
+    # Exclude only personal and owned org repos
     contrib_only_repos = repos_with_contributions - owned_repos
 
-    # Warn if we might be hitting the limit
-    debug(f"count_all_contributed_repos: Found {len(contrib_only_repos)} unique non-owned repos with contributions: {contrib_only_repos}")
-    if len(contribs) >= 100:
-        debug("WARNING: commitContributionsByRepository returned 100 repos, which is the max limit. Some contributions may be missing.")
     return len(contrib_only_repos), contrib_only_repos
 
 # ----------------------- Core Functions -----------------------
