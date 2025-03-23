@@ -7,6 +7,7 @@ from xml.dom import minidom
 import time
 import hashlib
 import sys
+import datetime
 
 # ----------------------- Configuration -----------------------
 
@@ -24,12 +25,78 @@ QUERY_COUNT = {
     'recursive_loc': 0,
     'graph_commits': 0,
     'loc_query': 0,
-    'pr_contributed_repos': 0  # Add this for PR query
+    'pr_contributed_repos': 0,
+    'lifetime_contributions': 0  # Added for lifetime contributions query
 }
 
 # ... [Keep other helper functions and imports unchanged] ...
 
 # ----------------------- Debug Function -----------------------
+
+def get_lifetime_contributions(username, start_date):
+    query_count('lifetime_contributions')
+    query = '''
+    query($login: String!, $from: DateTime!, $to: DateTime) {
+      user(login: $login) {
+        contributionsCollection(from: $from, to: $to) {
+          totalCommitContributions
+          totalIssueContributions
+          totalPullRequestContributions
+          totalPullRequestReviewContributions
+        }
+      }
+    }'''
+    
+    start_date_dt = parser.isoparse(start_date)
+    end_date_dt = datetime.datetime.now(datetime.timezone.utc)
+    delta = relativedelta.relativedelta(years=1)
+    
+    total_contributions = 0
+    current_start = start_date_dt
+    
+    debug(f"Fetching contributions from {start_date} to {end_date_dt.isoformat()} for {username}")
+    
+    while current_start < end_date_dt:
+        current_end = min(current_start + delta, end_date_dt)
+        current_start_iso = current_start.isoformat().replace('+00:00', 'Z')
+        current_end_iso = current_end.isoformat().replace('+00:00', 'Z')
+        
+        variables = {
+            'login': username,
+            'from': current_start_iso,
+            'to': current_end_iso
+        }
+        
+        debug(f"Querying from {current_start_iso} to {current_end_iso}")
+        debug(f"Variables: {variables}")
+        response = simple_request("get_lifetime_contributions", query, variables)
+        json_response = response.json()
+        debug(f"API Response: {json_response}")
+        
+        if 'errors' in json_response:
+            debug(f"GraphQL errors: {json_response['errors']}")
+            raise Exception(f"GraphQL errors: {json_response['errors']}")
+        
+        if 'data' not in json_response or json_response['data']['user'] is None:
+            debug(f"No user data for {username}")
+            raise Exception(f"No user data returned for {username}")
+        
+        contribs = json_response['data']['user']['contributionsCollection']
+        debug(f"Contributions data: {contribs}")
+        interval_contributions = (
+            contribs['totalCommitContributions'] +
+            contribs['totalIssueContributions'] +
+            contribs['totalPullRequestContributions'] +
+            contribs['totalPullRequestReviewContributions']
+        )
+        
+        total_contributions += interval_contributions
+        debug(f"Interval contributions = {interval_contributions}, Running total = {total_contributions}")
+        
+        current_start = current_end
+    
+    debug(f"Total lifetime contributions = {total_contributions}")
+    return total_contributions
 
 def debug(msg):
     if DEBUG:
@@ -788,18 +855,15 @@ if __name__ == '__main__':
     OWNER_ID = user_info['id']
     age_data, age_time = perf_counter(daily_readme, datetime.datetime(2002, 9, 19))
 
-    # Get start_date and end_date for contributionsCollection
-    start_date = created_at
-    end_date = datetime.datetime.utcnow().isoformat() + 'Z'
+    # Fetch lifetime contributions
+    total_contributions, contrib_time = perf_counter(get_lifetime_contributions, USER_NAME, created_at)
 
     # Fetch counts
     repo_count, repo_time = perf_counter(graph_repos_stars, 'repos', ['OWNER'])
-    contrib_result, contrib_repo_time = perf_counter(count_all_contributed_repos, USER_NAME, OWNER_ID, start_date, end_date)
+    contrib_result, contrib_repo_time = perf_counter(count_all_contributed_repos, USER_NAME, OWNER_ID, created_at, datetime.datetime.utcnow().isoformat() + 'Z')
     contrib_repo_count, contrib_repos = contrib_result
     star_count, star_time = perf_counter(graph_repos_stars, 'stars', ['OWNER'])
     follower_count, follower_time = perf_counter(follower_getter, USER_NAME)
-
-    # ... [Remainder of the main execution unchanged] ...
 
     # Update cache for all repos (owned + contributed)
     all_affiliations = ['OWNER', 'COLLABORATOR', 'ORGANIZATION_MEMBER']
@@ -808,21 +872,18 @@ if __name__ == '__main__':
     else:
         total_loc, total_loc_time = perf_counter(incremental_cache_update, "_all", all_affiliations, last_update, 7, False)
 
-    # Calculate total commits from the single cache
-    total_commit_data = commit_counter(7, "_all")
-
     # Format data
     repo_data = formatter('my repositories', repo_time, repo_count, 2)
     contrib_data = formatter('contributed repos', contrib_repo_time, contrib_repo_count, 2)
     star_data = formatter('star counter', star_time, star_count)
     follower_data = formatter('follower counter', follower_time, follower_count)
-    total_commit_data_formatted = formatter('total commits', total_loc_time, total_commit_data, 7)
+    total_contributions_formatted = formatter('total contributions', contrib_time, total_contributions, 7)
     for index in range(len(total_loc)):
         total_loc[index] = '{:,}'.format(total_loc[index])
 
     # Overwrite SVG files
-    svg_overwrite('dark_mode.svg', age_data, total_commit_data_formatted, star_data, repo_data, contrib_data, follower_data, total_loc)
-    svg_overwrite('light_mode.svg', age_data, total_commit_data_formatted, star_data, repo_data, contrib_data, follower_data, total_loc)
+    svg_overwrite('dark_mode.svg', age_data, total_contributions_formatted, star_data, repo_data, contrib_data, follower_data, total_loc)
+    svg_overwrite('light_mode.svg', age_data, total_contributions_formatted, star_data, repo_data, contrib_data, follower_data, total_loc)
 
     new_timestamp = datetime.datetime.utcnow().isoformat() + "Z"
     if mode == "full":
@@ -834,14 +895,14 @@ if __name__ == '__main__':
     save_metadata(meta)
 
     # Print metrics
-    total_func_time = user_time + age_time + total_loc_time + star_time + follower_time + contrib_repo_time
+    total_func_time = user_time + age_time + contrib_time + star_time + follower_time + contrib_repo_time
     print('\033[F' * 8, '{:<21}'.format('Total function time:'), '{:>11}'.format('%.4f' % total_func_time), ' s')
     print('Total GitHub GraphQL API calls:', '{:>3}'.format(sum(QUERY_COUNT.values())))
     for funct_name, count in QUERY_COUNT.items():
         print('{:<28}'.format('   ' + funct_name + ':'), '{:>6}'.format(count))
 
     print("\nage_data:", age_data)
-    print("total_commit_data_formatted:", total_commit_data_formatted)
+    print("total_contributions_formatted:", total_contributions_formatted)
     print("star_data:", star_data)
     print("repo_data:", repo_data)
     print("contrib_data:", contrib_data)
