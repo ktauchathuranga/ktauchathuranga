@@ -60,3 +60,4 @@ with open("ascii_art.svg", "w") as svg_file:
     svg_file.write(svg_output)
 
 print("ASCII art saved to 'ascii_art.svg'")
+
