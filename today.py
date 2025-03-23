@@ -33,69 +33,56 @@ QUERY_COUNT = {
 
 # ----------------------- Debug Function -----------------------
 
+import datetime
+from dateutil import parser
+
 def get_lifetime_contributions(username, start_date):
-    query_count('lifetime_contributions')
     query = '''
-    query($login: String!, $from: DateTime!, $to: DateTime) {
+    query($login: String!, $from: DateTime!) {
       user(login: $login) {
-        contributionsCollection(from: $from, to: $to) {
-          totalCommitContributions
-          totalIssueContributions
-          totalPullRequestContributions
-          totalPullRequestReviewContributions
+        contributionsCollection(from: $from) {
+          contributionCalendar {
+            totalContributions
+          }
         }
       }
     }'''
     
+    # Parse the start date
     start_date_dt = parser.isoparse(start_date)
-    end_date_dt = datetime.datetime.now(datetime.timezone.utc)
-    delta = relativedelta.relativedelta(years=1)
+    current_year = datetime.datetime.now(datetime.timezone.utc).year
     
     total_contributions = 0
-    current_start = start_date_dt
-    
-    debug(f"Fetching contributions from {start_date} to {end_date_dt.isoformat()} for {username}")
-    
-    while current_start < end_date_dt:
-        current_end = min(current_start + delta, end_date_dt)
-        current_start_iso = current_start.isoformat().replace('+00:00', 'Z')
-        current_end_iso = current_end.isoformat().replace('+00:00', 'Z')
+
+    # Loop through each year from the start year to the current year
+    for year in range(start_date_dt.year, current_year + 1):
+        # Start from January 1st of the current year in the loop
+        year_start = datetime.datetime(year, 1, 1, tzinfo=datetime.timezone.utc)
         
+        # Prepare variables for the GraphQL query
         variables = {
             'login': username,
-            'from': current_start_iso,
-            'to': current_end_iso
+            'from': year_start.isoformat().replace('+00:00', 'Z')
         }
-        
-        debug(f"Querying from {current_start_iso} to {current_end_iso}")
-        debug(f"Variables: {variables}")
+
+        # Execute the GraphQL query
         response = simple_request("get_lifetime_contributions", query, variables)
         json_response = response.json()
-        debug(f"API Response: {json_response}")
-        
+        print(json_response)
+
+        # Check for errors in the response
         if 'errors' in json_response:
-            debug(f"GraphQL errors: {json_response['errors']}")
             raise Exception(f"GraphQL errors: {json_response['errors']}")
-        
-        if 'data' not in json_response or json_response['data']['user'] is None:
-            debug(f"No user data for {username}")
-            raise Exception(f"No user data returned for {username}")
-        
-        contribs = json_response['data']['user']['contributionsCollection']
-        debug(f"Contributions data: {contribs}")
-        interval_contributions = (
-            contribs['totalCommitContributions'] +
-            contribs['totalIssueContributions'] +
-            contribs['totalPullRequestContributions'] +
-            contribs['totalPullRequestReviewContributions']
-        )
-        
-        total_contributions += interval_contributions
-        debug(f"Interval contributions = {interval_contributions}, Running total = {total_contributions}")
-        
-        current_start = current_end
-    
-    debug(f"Total lifetime contributions = {total_contributions}")
+
+        # Check if user data exists
+        if not json_response.get('data', {}).get('user'):
+            raise Exception(f"No user data for {username} in {year}")
+
+        # Add contributions to the total
+        contribs = json_response['data']['user']['contributionsCollection']['contributionCalendar']['totalContributions']
+        total_contributions += contribs
+        print(contribs)
+
     return total_contributions
 
 def debug(msg):
