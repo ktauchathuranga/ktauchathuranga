@@ -39,7 +39,7 @@ text, tspan {white-space: pre;}
 </text>
 
 <text x="370" y="30" fill="#24292f">
-<tspan x="370" y="30">root@kali</tspan>
+<tspan x="370" y="30">root@archlinux</tspan>
 <tspan x="370" y="50">——————</tspan>
 <tspan x="370" y="70" class="keyColor">OS</tspan>: <tspan class="valueColor">Windows 10, Kali Linux</tspan>
 <tspan x="370" y="90" class="keyColor">Uptime</tspan>: <tspan class="valueColor">22 years, 8 months, 5 days</tspan>
