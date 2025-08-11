@@ -64,5 +64,4 @@ text, tspan {white-space: pre;}
 <tspan x="370" y="550" class="keyColor">Followers</tspan>: <tspan class="valueColor">20</tspan> | <tspan class="keyColor">Lines of Code</tspan>: <tspan class="valueColor">302,306</tspan> (<tspan class="addColor">534,643++</tspan>, <tspan class="delColor">232,337--</tspan>)
 </text>
 
-
 </svg>
