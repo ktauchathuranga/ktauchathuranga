@@ -671,20 +671,20 @@ def svg_overwrite(filename, age_data, commit_data, star_data, repo_data, contrib
 
         # Update all relevant <tspan> elements
         safe_update(30, age_data)
-        safe_update(65, repo_data)
-        safe_update(67, contrib_data)
-        safe_update(69, commit_data)
-        safe_update(71, star_data)
-        safe_update(73, follower_data)
-        safe_update(75, loc_data[2])
-        safe_update(76, loc_data[0] + '++')
-        safe_update(77, loc_data[1] + '--')
+        safe_update(69, repo_data)
+        safe_update(71, contrib_data)
+        safe_update(73, commit_data)
+        safe_update(75, star_data)
+        safe_update(77, follower_data)
+        safe_update(79, loc_data[2])
+        safe_update(80, loc_data[0] + '++')
+        safe_update(81, loc_data[1] + '--')
 
         # Now only remove the spaces from the specific updated content
         xml_string = svg.toxml('utf-8').decode('utf-8')
 
         # Only remove unwanted spaces between tags in the areas that were updated
-        for index in [30, 65, 67, 69, 71, 73, 75, 76, 77]:
+        for index in [30, 69, 71, 73, 75, 77, 79, 80, 81]:
             tspan_text = str(tspan[index].firstChild.data).strip()
             xml_string = xml_string.replace(f'<tspan class="valueColor">{tspan[index].firstChild.data}</tspan>', f'<tspan class="valueColor">{tspan_text}</tspan>')
 
