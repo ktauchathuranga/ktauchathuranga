@@ -42,7 +42,7 @@ text, tspan {white-space: pre;}
 <tspan x="370" y="30">root@archlinux</tspan>
 <tspan x="370" y="50">——————</tspan>
 <tspan x="370" y="70" class="keyColor">OS</tspan>: <tspan class="valueColor">LifeOS (long-term support)</tspan>
-<tspan x="370" y="90" class="keyColor">Uptime</tspan>: <tspan class="valueColor">23 years, 0 months, 29 days</tspan>
+<tspan x="370" y="90" class="keyColor">Uptime</tspan>: <tspan class="valueColor">23 years, 1 month, 0 days</tspan>
 <tspan x="370" y="110" class="keyColor">Host</tspan>: <tspan class="valueColor">Carbon-based lifeform</tspan><tspan class="commentColor"> #RIT</tspan>
 <tspan x="370" y="130" class="keyColor">Kernel</tspan>: <tspan class="valueColor">Logic/Emotion Hybrid Kernel</tspan><tspan class="commentColor"> #CPET</tspan>
 <tspan x="370" y="150" class="keyColor">IDE</tspan>: <tspan class="valueColor">Neovim</tspan>
@@ -60,7 +60,7 @@ text, tspan {white-space: pre;}
 <tspan x="370" y="450" class="keyColor">Discord</tspan>: <tspan class="valueColor">ktauchathuranga</tspan>
 <tspan x="370" y="490" class="keyColor">GitHub Stats</tspan>:
 <tspan x="370" y="510">——————</tspan>
-<tspan x="370" y="530" class="keyColor">Repos</tspan>: <tspan class="valueColor">95</tspan> {<tspan class="keyColor">Contributed</tspan>: <tspan class="valueColor">8</tspan>} | <tspan class="keyColor">Contributions</tspan>: <tspan class="valueColor">3,629</tspan> | <tspan class="keyColor">Stars</tspan>: <tspan class="valueColor">47</tspan>
+<tspan x="370" y="530" class="keyColor">Repos</tspan>: <tspan class="valueColor">95</tspan> {<tspan class="keyColor">Contributed</tspan>: <tspan class="valueColor">8</tspan>} | <tspan class="keyColor">Contributions</tspan>: <tspan class="valueColor">3,640</tspan> | <tspan class="keyColor">Stars</tspan>: <tspan class="valueColor">46</tspan>
 <tspan x="370" y="550" class="keyColor">Followers</tspan>: <tspan class="valueColor">25</tspan> | <tspan class="keyColor">Lines of Code</tspan>: <tspan class="valueColor">333,263</tspan> (<tspan class="addColor">602,462++</tspan>, <tspan class="delColor">269,199--</tspan>)
 </text>
 
