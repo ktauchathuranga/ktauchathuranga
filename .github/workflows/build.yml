@@ -6,6 +6,12 @@ on:
   schedule:
     - cron: "0 4 * * *" # Runs daily at 04:00 UTC
   workflow_dispatch: # Allows manual triggering via API
+    inputs:
+      force_full:
+        description: 'Force full cache update?'
+        type: boolean
+        required: false
+        default: false
 permissions:
   contents: write
 jobs:
@@ -31,7 +37,7 @@ jobs:
       - name: Determine update mode
         id: update_mode
         run: |
-          if [ "$(date +%d)" -eq "01" ]; then
+          if [ "$(date +%d)" -eq "01" ] || [ "${{ inputs.force_full }}" == "true" ]; then
             echo "Running full cache update"
             echo "MODE=full-cache" >> $GITHUB_ENV
           else
