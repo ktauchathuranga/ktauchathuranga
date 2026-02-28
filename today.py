@@ -875,27 +875,29 @@ def svg_overwrite(
 
 
 def get_repos_updated_since(last_update, owner_affiliation):
-    query = """
-    query($login: String!, $ownerAffiliations: [RepositoryAffiliation]) {
-      user(login: $login) {
-        repositories(first: 100, ownerAffiliations: $ownerAffiliations) {
-          edges {
-            node {
-              nameWithOwner
-              updatedAt
-              defaultBranchRef {       
-                target {
-                    ... on Commit {
-                        history {
-                            totalCount
-                 }
-          }
-        }
+        query = """
+        query($login: String!, $ownerAffiliations: [RepositoryAffiliation]) {
+            user(login: $login) {
+                repositories(first: 100, ownerAffiliations: $ownerAffiliations) {
+                    edges {
+                        node {
+                            nameWithOwner
+                            updatedAt
+                            defaultBranchRef {
+                                target {
+                                    ... on Commit {
+                                        history {
+                                            totalCount
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
             }
-          }
         }
-      }
-    }"""
+        """
     variables = {"login": USER_NAME, "ownerAffiliations": owner_affiliation}
     response = simple_request("get_repos_updated_since", query, variables)
     json_data = response.json()
