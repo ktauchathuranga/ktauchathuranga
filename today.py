@@ -528,9 +528,11 @@ def recursive_loc(owner, repo_name, data, cache_comment, cursor=None, addition_t
                 raise Exception("Too many requests! You've hit the anti-abuse limit!")
             raise Exception(f'recursive_loc() failed with status: {response.status_code}, response: {response.text}')
     debug(f"recursive_loc: Completed for {owner}/{repo_name} -> commits: {my_commits}, additions: {addition_total}, deletions: {deletion_total}")
-    return addition_total, deletion_total, my_commits
+    return addition_total, deletion_total, my_commitsdef loc_query(owner_affiliation, comment_size=0, force_cache=False, cursor=None, edges=[], cache_suffix=""):
 
-def loc_query(owner_affiliation, comment_size=0, force_cache=False, cursor=None, edges=[], cache_suffix=""):
+def loc_query(owner_affiliation, comment_size=0, force_cache=False, cursor=None, edges=None, cache_suffix=""):
+    if edges is None:
+    edges = []
     query_count('loc_query')
     debug(f"loc_query{cache_suffix}: Fetching repositories with cursor {cursor} for affiliation {owner_affiliation}")
     query = '''
@@ -704,6 +706,14 @@ def get_repos_updated_since(last_update, owner_affiliation):
             node {
               nameWithOwner
               updatedAt
+              defaultBranchRef {       
+                target {
+                    ... on Commit {
+                        history {
+                            totalCount
+                 }
+          }
+        }
             }
           }
         }
@@ -725,9 +735,9 @@ def get_repos_updated_since(last_update, owner_affiliation):
 def update_cache_for_repo(repo, cache_suffix, comment_size=7):
     owner, repo_name = repo['nameWithOwner'].split('/')
     updated_data = recursive_loc(owner, repo_name, [], [])
-    expected_commits = updated_data[2]
+    total_commits = repo['defaultBranchRef']['target']['history']['totalCount'] if repo.get('defaultBranchRef') else 0
     current_hash = hashlib.sha256(repo['nameWithOwner'].encode('utf-8')).hexdigest()
-    new_entry = current_hash + ' ' + str(expected_commits) + ' ' + str(updated_data[2]) + ' ' + str(updated_data[0]) + ' ' + str(updated_data[1]) + '\n'
+    new_entry = current_hash + ' ' + str(total_commits) + ' ' + str(updated_data[2]) + ' ' + str(updated_data[0]) + ' ' + str(updated_data[1]) + '\n'
     debug(f"update_cache_for_repo: Updated {repo['nameWithOwner']} with new entry: {new_entry.strip()}")
     return new_entry
 
