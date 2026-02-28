@@ -866,10 +866,11 @@ if __name__ == '__main__':
 
     # Update cache for all repos (owned + contributed)
     all_affiliations = ['OWNER', 'COLLABORATOR', 'ORGANIZATION_MEMBER']
+    # in __main__
     if mode == "full":
         total_loc, total_loc_time = perf_counter(loc_query, all_affiliations, 7, True, None, [], "_all")
     else:
-        total_loc, total_loc_time = perf_counter(incremental_cache_update, "_all", all_affiliations, last_update, 7, False)
+        total_loc, total_loc_time = perf_counter(incremental_cache_update, "_all", ['OWNER'], last_update, 7, False)
 
     # Format data
     repo_data = formatter('my repositories', repo_time, repo_count, 2)
