@@ -528,11 +528,11 @@ def recursive_loc(owner, repo_name, data, cache_comment, cursor=None, addition_t
                 raise Exception("Too many requests! You've hit the anti-abuse limit!")
             raise Exception(f'recursive_loc() failed with status: {response.status_code}, response: {response.text}')
     debug(f"recursive_loc: Completed for {owner}/{repo_name} -> commits: {my_commits}, additions: {addition_total}, deletions: {deletion_total}")
-    return addition_total, deletion_total, my_commitsdef loc_query(owner_affiliation, comment_size=0, force_cache=False, cursor=None, edges=[], cache_suffix=""):
+    return addition_total, deletion_total, my_commits
 
 def loc_query(owner_affiliation, comment_size=0, force_cache=False, cursor=None, edges=None, cache_suffix=""):
     if edges is None:
-    edges = []
+        edges = []
     query_count('loc_query')
     debug(f"loc_query{cache_suffix}: Fetching repositories with cursor {cursor} for affiliation {owner_affiliation}")
     query = '''
