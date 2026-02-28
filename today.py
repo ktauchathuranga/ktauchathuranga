@@ -898,7 +898,10 @@ def get_repos_updated_since(last_update, owner_affiliation):
             }
         }
         """
-    variables = {"login": USER_NAME, "ownerAffiliations": owner_affiliation}
+    variables = {
+        "login": USER_NAME,
+        "ownerAffiliations": owner_affiliation
+    }
     response = simple_request("get_repos_updated_since", query, variables)
     json_data = response.json()
     if "data" not in json_data:
