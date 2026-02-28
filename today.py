@@ -441,12 +441,14 @@ def graph_repos_stars(count_type, owner_affiliation, cursor=None, repos_with_com
         count = data['totalCount']
         debug("graph_repos_stars: Repo count = " + str(count))
         return count
-    elif count_type == 'stars':
-        total = 0
-        for edge in data['edges']:
-            total += edge['node']['stargazers']['totalCount']
-        debug("graph_repos_stars: Total stars = " + str(total))
-        return total
+elif count_type == 'stars':
+    total = 0
+    for edge in data['edges']:
+        total += edge['node']['stargazers']['totalCount']
+    if data['pageInfo']['hasNextPage']:
+        total += graph_repos_stars(count_type, owner_affiliation, data['pageInfo']['endCursor'])
+    debug("graph_repos_stars: Total stars = " + str(total))
+    return total
     elif count_type == 'commit_repos':
         for edge in data['edges']:
             node = edge['node']
