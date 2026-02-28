@@ -898,28 +898,28 @@ def get_repos_updated_since(last_update, owner_affiliation):
             }
         }
         """
-    variables = {
-        "login": USER_NAME,
-        "ownerAffiliations": owner_affiliation
-    }
-    response = simple_request("get_repos_updated_since", query, variables)
-    json_data = response.json()
-    if "data" not in json_data:
-        if "errors" in json_data:
-            debug(f"get_repos_updated_since: GraphQL errors: {json_data['errors']}")
-            raise Exception(f"GraphQL errors in get_repos_updated_since: {json_data['errors']}")
-        else:
-            debug(f"get_repos_updated_since: Response missing both 'data' and 'errors': {json_data}")
-            raise Exception("GraphQL response missing both 'data' and 'errors' keys.")
-    updated_repos = []
-    for edge in json_data["data"]["user"]["repositories"]["edges"]:
-        repo = edge["node"]
-        if repo["updatedAt"] > last_update:
-            updated_repos.append(repo)
-    debug(
-        f"get_repos_updated_since: {len(updated_repos)} repos updated since {last_update}"
-    )
-    return updated_repos
+        variables = {
+                "login": USER_NAME,
+                "ownerAffiliations": owner_affiliation
+        }
+        response = simple_request("get_repos_updated_since", query, variables)
+        json_data = response.json()
+        if "data" not in json_data:
+                if "errors" in json_data:
+                        debug(f"get_repos_updated_since: GraphQL errors: {json_data['errors']}")
+                        raise Exception(f"GraphQL errors in get_repos_updated_since: {json_data['errors']}")
+                else:
+                        debug(f"get_repos_updated_since: Response missing both 'data' and 'errors': {json_data}")
+                        raise Exception("GraphQL response missing both 'data' and 'errors' keys.")
+        updated_repos = []
+        for edge in json_data["data"]["user"]["repositories"]["edges"]:
+                repo = edge["node"]
+                if repo["updatedAt"] > last_update:
+                        updated_repos.append(repo)
+        debug(
+                f"get_repos_updated_since: {len(updated_repos)} repos updated since {last_update}"
+        )
+        return updated_repos
 
 
 def update_cache_for_repo(repo, cache_suffix, comment_size=7):
