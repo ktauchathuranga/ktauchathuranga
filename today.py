@@ -128,19 +128,29 @@ def save_metadata(meta):
     debug("Saved metadata: " + str(meta))
 
 
-def simple_request(func_name, query, variables):
+def simple_request(func_name, query, variables, max_retries=5):
     debug(f"{func_name}: Sending request with variables {variables}")
-    response = requests.post(
-        "https://api.github.com/graphql",
-        json={"query": query, "variables": variables},
-        headers=HEADERS,
-    )
-    if response.status_code == 200:
-        debug(f"{func_name}: Received successful response.")
-        return response
-    raise Exception(
-        func_name, "has failed with", response.status_code, response.text, QUERY_COUNT
-    )
+    retryable_codes = {502, 503, 504, 429}
+    for attempt in range(max_retries):
+        response = requests.post(
+            "https://api.github.com/graphql",
+            json={"query": query, "variables": variables},
+            headers=HEADERS,
+        )
+        if response.status_code == 200:
+            debug(f"{func_name}: Received successful response.")
+            return response
+        if response.status_code in retryable_codes and attempt < max_retries - 1:
+            wait = 2 ** attempt  # exponential backoff: 1, 2, 4, 8, 16s
+            debug(
+                f"{func_name}: Got {response.status_code}, retrying in {wait}s "
+                f"(attempt {attempt + 1}/{max_retries})"
+            )
+            time.sleep(wait)
+            continue
+        raise Exception(
+            func_name, "has failed with", response.status_code, response.text, QUERY_COUNT
+        )
 
 
 def query_count(funct_id):
